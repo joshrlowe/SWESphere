@@ -1,10 +1,18 @@
 from app import app, db
 from app.forms import LoginForm, RegistrationForm
 from app.models import User
+from datetime import datetime, timezone
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from urllib.parse import urlsplit
 import sqlalchemy as sa
+
+
+@app.before_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.now(timezone.utc)
+        db.session.commit()
 
 
 @app.route("/")
