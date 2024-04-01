@@ -74,3 +74,14 @@ def register():
             len(form.password2.errors) if form.password2.errors else 0
         ),
     )
+
+
+@app.route("/user/<username>")
+@login_required
+def user(username):
+    user = db.first_or_404(sa.select(User).where(User.username == username))
+    posts = [
+        {"author": user, "body": "This is user1's first post!"},
+        {"author": user, "body": "This is user2's first post!"},
+    ]
+    return render_template("user.html", user=user, posts=posts)
