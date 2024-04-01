@@ -1,6 +1,7 @@
 from app import login
 from datetime import datetime, timezone
 from flask_login import UserMixin
+from hashlib import md5
 from typing import Optional
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlalchemy as sa
@@ -28,6 +29,10 @@ class User(db.Model, UserMixin):
 
     def check_password(self, password) -> None:
         return check_password_hash(self.password_hash, password)
+
+    def avatar(self, size):
+        digest = md5(self.email.lower().encode("utf-8")).hexdigest()
+        return f"https://www.gravatar.com/avatar/{digest}?d=identicon&s={size}"
 
 
 class Post(db.Model):
