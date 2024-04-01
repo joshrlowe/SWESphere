@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Edit Profile</h1>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.username.mabel }}<br>
+            {{ form.username(size=32) }}
+            {% if username_errors_length > 1 %}
+            <br>
+            {% for error in form.username.errors %}
+            <span style="color: red;">[{{ error }}]</span><br>
+            {% endfor %}
+            {% else %}
+            {% for error in form.username.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+            {% endif %}
+        </p>
+        <p>
+            {{ form.about_me.label }}<br>
+            {{ form.about_me(size=32) }}
+            {% if about_me_errors_length > 1 %}
+            <br>
+            {% for error in form.about_me.errors %}
+            <span style="color: red;">[{{ error}}]</span><br>
+            {% endfor %}
+            {% else %}
+            {% for error in form.about_me.errors %}
+            <span style="color: red;">[{{ error}}]</span>
+            {% endfor %}
+            {% endif %}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}
