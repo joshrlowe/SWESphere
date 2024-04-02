@@ -2,9 +2,17 @@ from app import app, db
 from app.forms import EditProfileForm, EmptyForm, LoginForm, PostForm, RegistrationForm
 from app.models import User, Post
 from datetime import datetime, timezone
-from flask import flash, redirect, render_template, request, url_for
+from flask import (
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from flask_login import current_user, login_required, login_user, logout_user
 from urllib.parse import urlsplit
+import os
 import sqlalchemy as sa
 
 
@@ -212,3 +220,12 @@ def unfollow(username):
         return redirect(url_for("user", username=username))
     else:
         return redirect(url_for("index"))
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, "static", "images"),
+        "logo32.png",
+        mimetype="image/png",
+    )
