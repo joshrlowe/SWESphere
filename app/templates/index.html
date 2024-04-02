@@ -18,10 +18,22 @@
     {% for post in posts %}
         {% include '_post.html' %}
     {% endfor %}
-    {% if prev_url %}
-        <a href="{{ prev_url }}">&leq;</a>
-    {% endif %}
-    {% if next_url %}
-        <a href="{{ next_url }}">&geq;</a>
-    {% endif %}
+    <nav aria-label="Post navigation">
+        <ul class="pagination">
+            {% if prev_url %}
+            <li class="page-item{% if not prev_url %} disabled{% endif %}">
+                <a class="page-link" href="{{ prev_url }}">
+                    <span aria-hidden="true">&larr;</span> Back
+                </a>
+            </li>
+            {% endif %}
+            {% if next_url %}
+            <li class="page-item{% if not next_url %} disabled{% endif %}">
+                <a class="page-link" href="{{ next_url }}">
+                    Next <span aria-hidden="true">&rarr;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
 {% endblock %}
