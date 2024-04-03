@@ -4,6 +4,7 @@ from app.models import User, Post
 from datetime import datetime, timezone
 from flask import (
     flash,
+    make_response,
     redirect,
     render_template,
     request,
@@ -43,14 +44,17 @@ def index():
     )
     next_url = url_for("index", page=posts.next_num) if posts.has_next else None
     prev_url = url_for("index", page=posts.prev_num) if posts.has_prev else None
-    return render_template(
+    response = make_response(render_template(
         "index.html",
         title="Home",
         form=form,
         posts=posts.items,
         next_url=next_url,
         prev_url=prev_url,
-    )
+    ))
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+    return response
+
 
 
 @app.route("/explore")
@@ -63,13 +67,15 @@ def explore():
     )
     next_url = url_for("explore", page=posts.next_num) if posts.has_next else None
     prev_url = url_for("explore", page=posts.prev_num) if posts.has_prev else None
-    return render_template(
+    response = make_response(render_template(
         "index.html",
         title="Explore",
         posts=posts.items,
         next_url=next_url,
         prev_url=prev_url,
-    )
+    ))
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+    return response
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -89,13 +95,15 @@ def login():
         if not next_page or urlsplit(next_page).netloc != "":
             return redirect(url_for("index"))
         return redirect(next_page)
-    return render_template(
+    response = make_response(render_template(
         "login.html",
         title="Sign In",
         form=form,
         username_errors_length=len(form.username.errors) if form.username.errors else 0,
         password_errors_length=len(form.password.errors) if form.password.errors else 0,
-    )
+    ))
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+    return response
 
 
 @app.route("/logout")
@@ -117,7 +125,7 @@ def register():
         flash("Congratulations, you are now a registered user!")
         login_user(user, False)
         return redirect(url_for("index"))
-    return render_template(
+    response = make_response(render_template(
         "register.html",
         title="Register",
         form=form,
@@ -127,7 +135,9 @@ def register():
         password2_errors_length=(
             len(form.password2.errors) if form.password2.errors else 0
         ),
-    )
+    ))
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+    return response
 
 
 @app.route("/user/<username>")
@@ -150,14 +160,16 @@ def user(username):
         else None
     )
     form = EmptyForm()
-    return render_template(
+    response = make_response(render_template(
         "user.html",
         user=user,
         posts=posts.items,
         next_url=next_url,
         prev_url=prev_url,
         form=form,
-    )
+    ))
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+    return response
 
 
 @app.route("/edit_profile", methods=["GET", "POST"])
@@ -173,13 +185,15 @@ def edit_profile():
     elif request.method == "GET":
         form.username.data = current_user.username
         form.about_me.data = current_user.about_me
-    return render_template(
+    response = make_response(render_template(
         "edit_profile.html",
         title="Edit Profile",
         form=form,
         username_errors_length=len(form.username.errors) if form.username.errors else 0,
         about_me_errors_length=len(form.about_me.errors) if form.about_me.errors else 0,
-    )
+    ))
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+    return response
 
 
 @app.route("/follow/<username>", methods=["POST"])
