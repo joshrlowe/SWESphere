@@ -55,6 +55,7 @@ def index():
         )
     )
     response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Content-Security-Policy"] = (
         "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
@@ -81,6 +82,7 @@ def explore():
         )
     )
     response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Content-Security-Policy"] = (
         "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
@@ -118,6 +120,7 @@ def login():
         )
     )
     response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Content-Security-Policy"] = (
         "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
@@ -161,6 +164,7 @@ def register():
         )
     )
     response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Content-Security-Policy"] = (
         "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
@@ -198,6 +202,7 @@ def user(username):
         )
     )
     response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Content-Security-Policy"] = (
         "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
@@ -231,6 +236,7 @@ def edit_profile():
         )
     )
     response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Content-Security-Policy"] = (
         "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
