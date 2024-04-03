@@ -56,7 +56,7 @@ def index():
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -82,7 +82,7 @@ def explore():
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -119,7 +119,7 @@ def login():
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -162,7 +162,7 @@ def register():
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -199,7 +199,7 @@ def user(username):
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -232,7 +232,7 @@ def edit_profile():
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/"
+        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
