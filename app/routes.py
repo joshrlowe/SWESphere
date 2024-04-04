@@ -314,6 +314,15 @@ def reset_password_request():
         # Send email to user
         flash("Check your email for the instructions to reset your password")
         return redirect(url_for("login"))
-    return render_template(
-        "reset_password_request.html", title="Reset Password", form=form
+    response = make_response(
+        render_template(
+            "reset_password_request.html", title="Reset Password", form=form
+        )
     )
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Strict-Transport-Security"] = "max-age=15768000"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    )
+    return response
