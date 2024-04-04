@@ -10,13 +10,6 @@ import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    REMEMBER_COOKIE_SECURE=True,  # If you're using Flask-Login
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Lax",  # 'Lax' or 'Strict' depending on your requirements
-    SESSION_COOKIE_NAME="__Host-session",
-)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login = LoginManager(app)
