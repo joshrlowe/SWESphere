@@ -1,10 +1,12 @@
 from app import app, db
+from app.email import send_password_reset_email
 from app.forms import (
     EditProfileForm,
     EmptyForm,
     LoginForm,
     PostForm,
     RegistrationForm,
+    ResetPasswordForm,
     ResetPasswordRequestForm,
 )
 from app.models import User, Post
@@ -311,14 +313,39 @@ def reset_password_request():
         return redirect(url_for("index"))
     form = ResetPasswordRequestForm()
     if form.validate_on_submit():
-        # Send email to user
-        flash("Check your email for the instructions to reset your password")
+        user = db.session.scalar(sa.select(User).where(User.email == form.email.data))
+        if user:
+            send_password_reset_email(user)
+        flash(f"If an account matches your email, we'll send password reset instructions.")
         return redirect(url_for("login"))
     response = make_response(
         render_template(
             "reset_password_request.html", title="Reset Password", form=form
         )
     )
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Strict-Transport-Security"] = "max-age=15768000"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    )
+    return response
+
+
+@app.route("/reset_password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+    user = User.verify_reset_password_token(token)
+    if not user:
+        return redirect(url_for("index"))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        db.session.commit()
+        flash("Your password has been reset.")
+        return redirect(url_for("login"))
+    response = make_response(render_template("reset_password.html", form=form))
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
