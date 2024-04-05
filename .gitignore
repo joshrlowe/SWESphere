@@ -1,4 +1,4 @@
-.flaskenv
+.env
 __pycache__/
 app.db
 config.py
