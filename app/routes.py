@@ -316,7 +316,9 @@ def reset_password_request():
         user = db.session.scalar(sa.select(User).where(User.email == form.email.data))
         if user:
             send_password_reset_email(user)
-        flash(f"If an account matches your email, we'll send password reset instructions.")
+        flash(
+            f"If an account matches your email, we'll send password reset instructions."
+        )
         return redirect(url_for("login"))
     response = make_response(
         render_template(
