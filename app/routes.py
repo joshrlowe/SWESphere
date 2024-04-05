@@ -67,7 +67,7 @@ def index():
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -95,7 +95,7 @@ def explore():
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -134,7 +134,7 @@ def login():
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -179,7 +179,7 @@ def register():
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -218,7 +218,7 @@ def user(username):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -253,7 +253,7 @@ def edit_profile():
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -329,7 +329,7 @@ def reset_password_request():
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
 
@@ -352,6 +352,6 @@ def reset_password(token):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'strict-dynamic' 'nonce-RANDOM' 'self' https://swesphere.com; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
