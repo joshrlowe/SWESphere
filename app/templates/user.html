@@ -5,7 +5,7 @@
     {% if user.about_me %}
         <p>{{ user.about_me }}</p>
     {% endif %}
-    {% if user.last_seen %}<p>Last seen on: {{ user.last_seen }}</p>{% endif %}
+    {% if user.last_seen %}<p>Last seen <span id="last-seen" data-timestamp="{{ user.last_seen.isoformat() }}">{{ user.last_seen }}</span></p>{% endif %}
     <p>{{ user.followers_count() }} followers, {{ user.following_count() }} following.</p>
     {% if user == current_user %}
         <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>

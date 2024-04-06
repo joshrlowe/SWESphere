@@ -22,8 +22,13 @@ from flask import (
 )
 from flask_login import current_user, login_required, login_user, logout_user
 from urllib.parse import urlsplit
+import base64
 import os
 import sqlalchemy as sa
+
+
+def generate_nonce():
+    return base64.b64encode(os.urandom(16)).decode("utf-8")
 
 
 @app.before_request
@@ -53,6 +58,7 @@ def index():
     )
     next_url = url_for("index", page=posts.next_num) if posts.has_next else None
     prev_url = url_for("index", page=posts.prev_num) if posts.has_prev else None
+    nonce = generate_nonce()
     response = make_response(
         render_template(
             "index.html",
@@ -61,14 +67,22 @@ def index():
             posts=posts.items,
             next_url=next_url,
             prev_url=prev_url,
+            nonce=nonce,
         )
+    )
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://swesphere.com https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "img-src 'self' https://www.gravatar.com/avatar/; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    )
+    response.headers["Content-Security-Policy"] = csp.format(nonce=nonce)
     return response
 
 
@@ -82,6 +96,7 @@ def explore():
     )
     next_url = url_for("explore", page=posts.next_num) if posts.has_next else None
     prev_url = url_for("explore", page=posts.prev_num) if posts.has_prev else None
+    nonce = generate_nonce()
     response = make_response(
         render_template(
             "index.html",
@@ -89,14 +104,22 @@ def explore():
             posts=posts.items,
             next_url=next_url,
             prev_url=prev_url,
+            nonce=nonce,
         )
+    )
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://swesphere.com https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "img-src 'self' https://www.gravatar.com/avatar/; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    )
+    response.headers["Content-Security-Policy"] = csp.format(nonce=nonce)
     return response
 
 
@@ -117,6 +140,7 @@ def login():
         if not next_page or urlsplit(next_page).netloc != "":
             return redirect(url_for("index"))
         return redirect(next_page)
+    nonce = generate_nonce()
     response = make_response(
         render_template(
             "login.html",
@@ -128,14 +152,22 @@ def login():
             password_errors_length=(
                 len(form.password.errors) if form.password.errors else 0
             ),
+            nonce=nonce,
         )
+    )
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://swesphere.com https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "img-src 'self' https://www.gravatar.com/avatar/; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    )
+    response.headers["Content-Security-Policy"] = csp.format(nonce=nonce)
     return response
 
 
@@ -158,6 +190,7 @@ def register():
         flash("Congratulations, you are now a registered user!")
         login_user(user, False)
         return redirect(url_for("index"))
+    nonce = generate_nonce()
     response = make_response(
         render_template(
             "register.html",
@@ -173,14 +206,22 @@ def register():
             password2_errors_length=(
                 len(form.password2.errors) if form.password2.errors else 0
             ),
+            nonce=nonce,
         )
+    )
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://swesphere.com https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "img-src 'self' https://www.gravatar.com/avatar/; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    )
+    response.headers["Content-Security-Policy"] = csp.format(nonce=nonce)
     return response
 
 
@@ -204,6 +245,7 @@ def user(username):
         else None
     )
     form = EmptyForm()
+    nonce = generate_nonce()
     response = make_response(
         render_template(
             "user.html",
@@ -212,14 +254,22 @@ def user(username):
             next_url=next_url,
             prev_url=prev_url,
             form=form,
+            nonce=nonce,
         )
+    )
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://swesphere.com https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "img-src 'self' https://www.gravatar.com/avatar/; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    )
+    response.headers["Content-Security-Policy"] = csp.format(nonce=nonce)
     return response
 
 
@@ -236,6 +286,7 @@ def edit_profile():
     elif request.method == "GET":
         form.username.data = current_user.username
         form.about_me.data = current_user.about_me
+    nonce = generate_nonce()
     response = make_response(
         render_template(
             "edit_profile.html",
@@ -247,14 +298,22 @@ def edit_profile():
             about_me_errors_length=(
                 len(form.about_me.errors) if form.about_me.errors else 0
             ),
+            nonce=nonce,
         )
+    )
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://swesphere.com https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "img-src 'self' https://www.gravatar.com/avatar/; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    )
+    response.headers["Content-Security-Policy"] = csp.format(nonce=nonce)
     return response
 
 
@@ -320,17 +379,28 @@ def reset_password_request():
             f"If an account matches your email, we'll send password reset instructions."
         )
         return redirect(url_for("login"))
+    nonce = generate_nonce()
     response = make_response(
         render_template(
-            "reset_password_request.html", title="Reset Password", form=form
+            "reset_password_request.html",
+            title="Reset Password",
+            form=form,
+            nonce=nonce,
         )
+    )
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://swesphere.com https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "img-src 'self' https://www.gravatar.com/avatar/; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    )
+    response.headers["Content-Security-Policy"] = csp.format(nonce=nonce)
     return response
 
 
@@ -347,11 +417,25 @@ def reset_password(token):
         db.session.commit()
         flash("Your password has been reset.")
         return redirect(url_for("login"))
-    response = make_response(render_template("reset_password.html", form=form))
+    nonce = generate_nonce()
+    response = make_response(
+        render_template(
+            "reset_password.html",
+            form=form,
+            nonce=nonce,
+        )
+    )
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://swesphere.com https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "style-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        "img-src 'self' https://www.gravatar.com/avatar/; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=15768000"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; script-src 'nonce-RANDOM' 'self' https://swesphere.com https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' https://www.gravatar.com/avatar/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    )
+    response.headers["Content-Security-Policy"] = csp.format(nonce=nonce)
     return response
