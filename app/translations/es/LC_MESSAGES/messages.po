@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-04-06 13:15+0000\n"
-"PO-Revision-Date: 2024-04-06 13:19+0000\n"
+"POT-Creation-Date: 2024-04-06 14:44+0000\n"
+"PO-Revision-Date: 2024-04-06 14:44+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
 "Language-Team: es <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.14.0\n"
 
-#: app/__init__.py:23
+#: app/__init__.py:24
 msgid "Please log in to access this page."
 msgstr "Por favor ingrese para acceder a esta página."
 
@@ -38,7 +38,7 @@ msgstr "Contraseña"
 msgid "Remember Me"
 msgstr "Recordarme"
 
-#: app/forms.py:15 app/routes.py:148
+#: app/forms.py:15 app/routes.py:150
 msgid "Sign In"
 msgstr "Ingresar"
 
@@ -50,7 +50,7 @@ msgstr "Email"
 msgid "Repeat Password"
 msgstr "Repetir Contraseña"
 
-#: app/forms.py:25 app/routes.py:198
+#: app/forms.py:25 app/routes.py:200
 msgid "Register"
 msgstr "Registrarse"
 
@@ -78,66 +78,66 @@ msgstr "¿Qué pasa?"
 msgid "Request Password Reset"
 msgstr "Pedir una nueva contraseña"
 
-#: app/forms.py:77 app/routes.py:387
+#: app/forms.py:77 app/routes.py:391
 msgid "Reset Password"
 msgstr "Nueva Contraseña"
 
-#: app/routes.py:51
+#: app/routes.py:53
 msgid "Your post is now live!"
 msgstr "¡Tu artículo ha sido publicado!"
 
-#: app/routes.py:66 app/templates/base.html:70
+#: app/routes.py:68 app/templates/base.html:72
 msgid "Home"
 msgstr "Inicio"
 
-#: app/routes.py:104 app/templates/base.html:78
+#: app/routes.py:106 app/templates/base.html:80
 msgid "Explore"
 msgstr "Explorar"
 
-#: app/routes.py:137
+#: app/routes.py:139
 msgid "Invalid username or password"
 msgstr "Nombre de usuario o contraseña inválidos"
 
-#: app/routes.py:191
+#: app/routes.py:193
 msgid "Congratulations, you are now a registered user!"
 msgstr "¡Felicitaciones, ya eres un usuario registrado!"
 
-#: app/routes.py:285
+#: app/routes.py:287
 msgid "Your changes have been saved."
-msgstr "Tus cambios han sido salvados."
+msgstr "Tus cambios han sido guardados."
 
-#: app/routes.py:294 app/templates/edit_profile.html:2
+#: app/routes.py:296 app/templates/edit_profile.html:2
 msgid "Edit Profile"
 msgstr "Editar Perfil"
 
-#: app/routes.py:328 app/routes.py:348
+#: app/routes.py:330 app/routes.py:350
 #, python-format
 msgid "User %(username)s not found."
 msgstr "El usuario %(username)s no ha sido encontrado."
 
-#: app/routes.py:331
+#: app/routes.py:333
 msgid "You cannot follow yourself!"
-msgstr "¡No te puedes seguir a tí mismo!"
+msgstr "¡No puedes seguirte a ti mismo!"
 
-#: app/routes.py:335
+#: app/routes.py:337
 #, python-format
 msgid "You are following %(username)s!"
 msgstr "¡Ahora estás siguiendo a %(username)s!"
 
-#: app/routes.py:351
+#: app/routes.py:353
 msgid "You cannot unfollow yourself!"
-msgstr "¡No te puedes dejar de seguir a tí mismo!"
+msgstr "¡No puedes dejar de seguirte a ti mismo!"
 
-#: app/routes.py:355
+#: app/routes.py:357
 #, python-format
 msgid "You are not following %(username)s."
 msgstr "No estás siguiendo a %(username)s."
 
-#: app/routes.py:380
+#: app/routes.py:382
 msgid "If an account matches your email, we'll send password reset instructions."
 msgstr "Si una cuenta coincide con su correo electrónico, le enviaremos instrucciones para restablecer la contraseña."
 
-#: app/routes.py:419
+#: app/routes.py:423
 msgid "Your password has been reset."
 msgstr "Tu contraseña ha sido cambiada."
 
@@ -147,7 +147,7 @@ msgstr "Archivo no encontrado"
 
 #: app/templates/404.html:3 app/templates/500.html:6
 msgid "Back"
-msgstr "Atrás"
+msgstr "Volver"
 
 #: app/templates/500.html:2
 msgid "An unexpected error has occurred"
@@ -159,7 +159,7 @@ msgstr "El administrador ha sido notificado. ¡Lamentamos la inconveniencia!"
 
 #: app/templates/_post.html:5
 msgid "User Avatar"
-msgstr "avatar de usuario"
+msgstr "Avatar de usuario"
 
 #: app/templates/_post.html:13
 #, python-format
@@ -168,25 +168,25 @@ msgstr "%(username)s dijo"
 
 #: app/templates/_post.html:18
 msgid "Posted on"
-msgstr "Publicó en"
+msgstr "Publicado en"
 
 #: app/templates/base.html:9
 msgid "Welcome to SWESphere!"
 msgstr "¡Bienvenido a SWESphere!"
 
-#: app/templates/base.html:59
+#: app/templates/base.html:61
 msgid "Toggle navigation"
 msgstr "Navegación de palanca"
 
-#: app/templates/base.html:89
+#: app/templates/base.html:91
 msgid "Login"
 msgstr "Ingresar"
 
-#: app/templates/base.html:98
+#: app/templates/base.html:100
 msgid "Profile"
 msgstr "Perfil"
 
-#: app/templates/base.html:106
+#: app/templates/base.html:108
 msgid "Logout"
 msgstr "Salir"
 
@@ -194,4 +194,35 @@ msgstr "Salir"
 #, python-format
 msgid "Hi, %(username)s!"
 msgstr "¡Hola, %(username)s!"
+
+#: app/templates/user.html:4
+msgid "User"
+msgstr "Usuario"
+
+#: app/templates/user.html:8
+msgid "Last seen"
+msgstr "Última vez visto"
+
+#: app/templates/user.html:9
+#, python-format
+msgid "%(count)d followers"
+msgstr "%(count)d seguidores"
+
+#: app/templates/user.html:9
+#, python-format
+msgid "%(count)d following"
+msgstr "%(count)d siguiendo"
+
+#: app/templates/user.html:11
+msgid "Edit your profile"
+msgstr "Edita tu perfil"
+
+#: app/templates/user.html:16
+msgid "Follow"
+msgstr "Seguir"
+
+#: app/templates/user.html:23
+msgid "Unfollow"
+msgstr "Dejar de seguir"
+
 

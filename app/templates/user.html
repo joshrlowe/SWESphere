@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>{{ _(User) }}: {{ user.username }}</h1>
+    <h1>{{ _('User') }}: {{ user.username }}</h1>
     {% if user.about_me %}
         <p>{{ user.about_me }}</p>
     {% endif %}
-    {% if user.last_seen %}<p>{{ _(Last seen) }} <span id="last-seen" data-timestamp="{{ user.last_seen.isoformat() }}">{{ user.last_seen }}</span></p>{% endif %}
+    {% if user.last_seen %}<p>{{ _('Last seen') }} <span id="last-seen" data-timestamp="{{ user.last_seen.isoformat() }}">{{ user.last_seen }}</span></p>{% endif %}
     <p>{{ _('%(count)d followers', count=user.followers_count()) }}, {{ _('%(count)d following', count=user.following_count()) }}</p>
     {% if user == current_user %}
-        <p><a href="{{ url_for('edit_profile') }}">{{ _(Edit your profile) }}</a></p>
+        <p><a href="{{ url_for('edit_profile') }}">{{ _('Edit your profile') }}</a></p>
     {% elif not current_user.is_following(user) %}
         <p>
             <form action="{{ url_for('follow', username=user.username) }}" method="post">
