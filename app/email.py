@@ -1,5 +1,6 @@
 from app import app, mail
 from flask import render_template, url_for
+from flask_babel import _
 from flask_mail import Message
 from threading import Thread
 
