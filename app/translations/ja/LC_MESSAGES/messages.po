@@ -1,4 +1,4 @@
-# Spanish translations for PROJECT.
+# Japanese translations for PROJECT.
 # Copyright (C) 2024 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2024-04-07 01:48+0000\n"
-"PO-Revision-Date: 2024-04-06 14:44+0000\n"
+"PO-Revision-Date: 2024-04-06 16:36+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: es\n"
-"Language-Team: es <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,187 +20,185 @@ msgstr ""
 
 #: app/__init__.py:23
 msgid "Please log in to access this page."
-msgstr "Por favor ingrese para acceder a esta página."
+msgstr "このページにアクセスするにはログインしてください。"
 
 #: app/email.py:26
 msgid "[SWESphere] Reset Your Password"
-msgstr "[SWESphere] Nueva Contraseña"
+msgstr "[SWESphere] パスワードをリセットする"
 
 #: app/forms.py:12 app/forms.py:19 app/forms.py:39
 msgid "Username"
-msgstr "Nombre de usuario"
+msgstr "ユーザー名"
 
 #: app/forms.py:13 app/forms.py:21 app/forms.py:73
 msgid "Password"
-msgstr "Contraseña"
+msgstr "パスワード"
 
 #: app/forms.py:14
 msgid "Remember Me"
-msgstr "Recordarme"
+msgstr "ログイン状態を保持する"
 
 #: app/forms.py:15 app/routes.py:150 app/templates/login.html:2
 msgid "Sign In"
-msgstr "Ingresar"
+msgstr "サインイン"
 
 #: app/forms.py:20 app/forms.py:68
 msgid "Email"
-msgstr "Email"
+msgstr "メールアドレス"
 
 #: app/forms.py:23 app/forms.py:75
 msgid "Repeat Password"
-msgstr "Repetir Contraseña"
+msgstr "パスワードの再入力"
 
 #: app/forms.py:25 app/routes.py:200
 msgid "Register"
-msgstr "Registrarse"
+msgstr "登録する"
 
 #: app/forms.py:30 app/forms.py:53
 msgid "Please use a different username."
-msgstr "Por favor use un nombre de usuario diferente."
+msgstr "別のユーザー名を使用してください。"
 
 #: app/forms.py:35
 msgid "Please use a different email address."
-msgstr "Por favor use una dirección de email diferente."
+msgstr "別のメールアドレスを使用してください。"
 
 #: app/forms.py:40
 msgid "About me"
-msgstr "Acerca de mí"
+msgstr "自己紹介"
 
 #: app/forms.py:41 app/forms.py:57 app/forms.py:64
 msgid "Submit"
-msgstr "Enviar"
+msgstr "送信"
 
 #: app/forms.py:62
 msgid "What's happening?"
-msgstr "¿Qué pasa?"
+msgstr "何が起こっていますか？"
 
 #: app/forms.py:69
 msgid "Request Password Reset"
-msgstr "Pedir una nueva contraseña"
+msgstr "パスワードリセットを要求する"
 
 #: app/forms.py:77 app/routes.py:391
 msgid "Reset Password"
-msgstr "Nueva Contraseña"
+msgstr "パスワードをリセット"
 
 #: app/routes.py:53
 msgid "Your post is now live!"
-msgstr "¡Tu artículo ha sido publicado!"
+msgstr "あなたの投稿は現在公開されています！"
 
 #: app/routes.py:68 app/templates/base.html:87
 msgid "Home"
-msgstr "Inicio"
+msgstr "ホーム"
 
 #: app/routes.py:106 app/templates/base.html:95
 msgid "Explore"
-msgstr "Explorar"
+msgstr "探索"
 
 #: app/routes.py:139
 msgid "Invalid username or password"
-msgstr "Nombre de usuario o contraseña inválidos"
+msgstr "無効なユーザー名またはパスワード"
 
 #: app/routes.py:193
 msgid "Congratulations, you are now a registered user!"
-msgstr "¡Felicitaciones, ya eres un usuario registrado!"
+msgstr "おめでとうございます、あなたは今登録ユーザーです！"
 
 #: app/routes.py:287
 msgid "Your changes have been saved."
-msgstr "Tus cambios han sido guardados."
+msgstr "変更が保存されました。"
 
 #: app/routes.py:296 app/templates/edit_profile.html:2
 msgid "Edit Profile"
-msgstr "Editar Perfil"
+msgstr "プロフィールを編集"
 
 #: app/routes.py:330 app/routes.py:350
 #, python-format
 msgid "User %(username)s not found."
-msgstr "El usuario %(username)s no ha sido encontrado."
+msgstr "ユーザー %(username)s が見つかりませんでした。"
 
 #: app/routes.py:333
 msgid "You cannot follow yourself!"
-msgstr "¡No puedes seguirte a ti mismo!"
+msgstr "自分自身をフォローすることはできません！"
 
 #: app/routes.py:337
 #, python-format
 msgid "You are following %(username)s!"
-msgstr "¡Ahora estás siguiendo a %(username)s!"
+msgstr "%(username)s をフォローしています！"
 
 #: app/routes.py:353
 msgid "You cannot unfollow yourself!"
-msgstr "¡No puedes dejar de seguirte a ti mismo!"
+msgstr "自分自身のフォローを解除することはできません！"
 
 #: app/routes.py:357
 #, python-format
 msgid "You are not following %(username)s."
-msgstr "No estás siguiendo a %(username)s."
+msgstr "%(username)s をフォローしていません。"
 
 #: app/routes.py:382
 msgid "If an account matches your email, we'll send password reset instructions."
-msgstr ""
-"Si una cuenta coincide con su correo electrónico, le enviaremos "
-"instrucciones para restablecer la contraseña."
+msgstr "アカウントがあなたのメールアドレスと一致する場合、パスワードリセットの指示を送信します。"
 
 #: app/routes.py:423
 msgid "Your password has been reset."
-msgstr "Tu contraseña ha sido cambiada."
+msgstr "パスワードがリセットされました。"
 
 #: app/templates/404.html:2
 msgid "File Not Found"
-msgstr "Archivo no encontrado"
+msgstr "ファイルが見つかりません"
 
 #: app/templates/404.html:3 app/templates/500.html:6
 msgid "Back"
-msgstr "Volver"
+msgstr "戻る"
 
 #: app/templates/500.html:2
 msgid "An unexpected error has occurred"
-msgstr "Ha ocurrido un error inesperado"
+msgstr "予期せぬエラーが発生しました"
 
 #: app/templates/500.html:4
 msgid "The administrator has been notified. Sorry for the inconvenience!"
-msgstr "El administrador ha sido notificado. ¡Lamentamos la inconveniencia!"
+msgstr "管理者に通知されました。ご不便をおかけして申し訳ありません！"
 
 #: app/templates/_post.html:5
 msgid "User Avatar"
-msgstr "Avatar de usuario"
+msgstr "ユーザーアバター"
 
 #: app/templates/_post.html:13
 #, python-format
 msgid "%(username)s said"
-msgstr "%(username)s dijo"
+msgstr "%(username)s が言いました"
 
 #: app/templates/_post.html:18
 msgid "Posted on"
-msgstr "Publicado en"
+msgstr "投稿日"
 
 #: app/templates/base.html:9
 msgid "Welcome to SWESphere!"
-msgstr "¡Bienvenido a SWESphere!"
+msgstr "SWESphereへようこそ！"
 
 #: app/templates/base.html:76
 msgid "Toggle navigation"
-msgstr "Navegación de palanca"
+msgstr "ナビゲーションを切り替える"
 
 #: app/templates/base.html:106
 msgid "Login"
-msgstr "Ingresar"
+msgstr "ログイン"
 
 #: app/templates/base.html:115
 msgid "Profile"
-msgstr "Perfil"
+msgstr "プロフィール"
 
 #: app/templates/base.html:123
 msgid "Logout"
-msgstr "Salir"
+msgstr "ログアウト"
 
 #: app/templates/index.html:2
 #, python-format
 msgid "Hi, %(username)s!"
-msgstr "¡Hola, %(username)s!"
+msgstr "こんにちは、%(username)s！"
 
 #: app/templates/login.html:29
 #, fuzzy
 msgid "Forgot Your Password?"
-msgstr "Nueva Contraseña"
+msgstr "パスワードをリセット"
 
 #: app/templates/login.html:31
 msgid "Click to Reset It"
@@ -209,40 +207,40 @@ msgstr ""
 #: app/templates/login.html:35
 #, fuzzy
 msgid "New User?"
-msgstr "Usuario"
+msgstr "ユーザー"
 
 #: app/templates/login.html:36
 #, fuzzy
 msgid "Click to Register!"
-msgstr "Registrarse"
+msgstr "登録する"
 
 #: app/templates/user.html:4
 msgid "User"
-msgstr "Usuario"
+msgstr "ユーザー"
 
 #: app/templates/user.html:8
 msgid "Last seen"
-msgstr "Última vez visto"
+msgstr "最終ログイン"
 
 #: app/templates/user.html:9
 #, python-format
 msgid "%(count)d followers"
-msgstr "%(count)d seguidores"
+msgstr "%(count)d人のフォロワー"
 
 #: app/templates/user.html:9
 #, python-format
 msgid "%(count)d following"
-msgstr "%(count)d siguiendo"
+msgstr "%(count)d人をフォロー中"
 
 #: app/templates/user.html:11
 msgid "Edit your profile"
-msgstr "Edita tu perfil"
+msgstr "プロフィールを編集する"
 
 #: app/templates/user.html:16
 msgid "Follow"
-msgstr "Seguir"
+msgstr "フォローする"
 
 #: app/templates/user.html:23
 msgid "Unfollow"
-msgstr "Dejar de seguir"
+msgstr "フォローを解除する"
 

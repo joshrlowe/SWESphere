@@ -1,4 +1,4 @@
-# Spanish translations for PROJECT.
+# Korean translations for PROJECT.
 # Copyright (C) 2024 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2024-04-07 01:48+0000\n"
-"PO-Revision-Date: 2024-04-06 14:44+0000\n"
+"PO-Revision-Date: 2024-04-06 16:36+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: es\n"
-"Language-Team: es <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: ko\n"
+"Language-Team: ko <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,187 +20,185 @@ msgstr ""
 
 #: app/__init__.py:23
 msgid "Please log in to access this page."
-msgstr "Por favor ingrese para acceder a esta página."
+msgstr "이 페이지에 접근하려면 로그인하세요."
 
 #: app/email.py:26
 msgid "[SWESphere] Reset Your Password"
-msgstr "[SWESphere] Nueva Contraseña"
+msgstr "[SWESphere] 비밀번호 재설정"
 
 #: app/forms.py:12 app/forms.py:19 app/forms.py:39
 msgid "Username"
-msgstr "Nombre de usuario"
+msgstr "사용자 이름"
 
 #: app/forms.py:13 app/forms.py:21 app/forms.py:73
 msgid "Password"
-msgstr "Contraseña"
+msgstr "비밀번호"
 
 #: app/forms.py:14
 msgid "Remember Me"
-msgstr "Recordarme"
+msgstr "로그인 상태 유지"
 
 #: app/forms.py:15 app/routes.py:150 app/templates/login.html:2
 msgid "Sign In"
-msgstr "Ingresar"
+msgstr "로그인"
 
 #: app/forms.py:20 app/forms.py:68
 msgid "Email"
-msgstr "Email"
+msgstr "이메일"
 
 #: app/forms.py:23 app/forms.py:75
 msgid "Repeat Password"
-msgstr "Repetir Contraseña"
+msgstr "비밀번호 재입력"
 
 #: app/forms.py:25 app/routes.py:200
 msgid "Register"
-msgstr "Registrarse"
+msgstr "회원가입"
 
 #: app/forms.py:30 app/forms.py:53
 msgid "Please use a different username."
-msgstr "Por favor use un nombre de usuario diferente."
+msgstr "다른 사용자 이름을 사용하세요."
 
 #: app/forms.py:35
 msgid "Please use a different email address."
-msgstr "Por favor use una dirección de email diferente."
+msgstr "다른 이메일 주소를 사용하세요."
 
 #: app/forms.py:40
 msgid "About me"
-msgstr "Acerca de mí"
+msgstr "자기소개"
 
 #: app/forms.py:41 app/forms.py:57 app/forms.py:64
 msgid "Submit"
-msgstr "Enviar"
+msgstr "제출"
 
 #: app/forms.py:62
 msgid "What's happening?"
-msgstr "¿Qué pasa?"
+msgstr "무슨 일이 일어나고 있나요?"
 
 #: app/forms.py:69
 msgid "Request Password Reset"
-msgstr "Pedir una nueva contraseña"
+msgstr "비밀번호 재설정 요청"
 
 #: app/forms.py:77 app/routes.py:391
 msgid "Reset Password"
-msgstr "Nueva Contraseña"
+msgstr "비밀번호 재설정"
 
 #: app/routes.py:53
 msgid "Your post is now live!"
-msgstr "¡Tu artículo ha sido publicado!"
+msgstr "게시물이 공개되었습니다!"
 
 #: app/routes.py:68 app/templates/base.html:87
 msgid "Home"
-msgstr "Inicio"
+msgstr "홈"
 
 #: app/routes.py:106 app/templates/base.html:95
 msgid "Explore"
-msgstr "Explorar"
+msgstr "탐색"
 
 #: app/routes.py:139
 msgid "Invalid username or password"
-msgstr "Nombre de usuario o contraseña inválidos"
+msgstr "잘못된 사용자 이름 또는 비밀번호입니다"
 
 #: app/routes.py:193
 msgid "Congratulations, you are now a registered user!"
-msgstr "¡Felicitaciones, ya eres un usuario registrado!"
+msgstr "축하합니다, 이제 등록된 사용자입니다!"
 
 #: app/routes.py:287
 msgid "Your changes have been saved."
-msgstr "Tus cambios han sido guardados."
+msgstr "변경 사항이 저장되었습니다."
 
 #: app/routes.py:296 app/templates/edit_profile.html:2
 msgid "Edit Profile"
-msgstr "Editar Perfil"
+msgstr "프로필 편집"
 
 #: app/routes.py:330 app/routes.py:350
 #, python-format
 msgid "User %(username)s not found."
-msgstr "El usuario %(username)s no ha sido encontrado."
+msgstr "사용자 %(username)s를 찾을 수 없습니다."
 
 #: app/routes.py:333
 msgid "You cannot follow yourself!"
-msgstr "¡No puedes seguirte a ti mismo!"
+msgstr "자기 자신을 팔로우할 수 없습니다!"
 
 #: app/routes.py:337
 #, python-format
 msgid "You are following %(username)s!"
-msgstr "¡Ahora estás siguiendo a %(username)s!"
+msgstr "%(username)s님을 팔로우하고 있습니다!"
 
 #: app/routes.py:353
 msgid "You cannot unfollow yourself!"
-msgstr "¡No puedes dejar de seguirte a ti mismo!"
+msgstr "자기 자신의 팔로우를 취소할 수 없습니다!"
 
 #: app/routes.py:357
 #, python-format
 msgid "You are not following %(username)s."
-msgstr "No estás siguiendo a %(username)s."
+msgstr "%(username)s님을 팔로우하고 있지 않습니다."
 
 #: app/routes.py:382
 msgid "If an account matches your email, we'll send password reset instructions."
-msgstr ""
-"Si una cuenta coincide con su correo electrónico, le enviaremos "
-"instrucciones para restablecer la contraseña."
+msgstr "계정이 이메일과 일치하면 비밀번호 재설정 지침을 보내드립니다."
 
 #: app/routes.py:423
 msgid "Your password has been reset."
-msgstr "Tu contraseña ha sido cambiada."
+msgstr "비밀번호가 재설정되었습니다."
 
 #: app/templates/404.html:2
 msgid "File Not Found"
-msgstr "Archivo no encontrado"
+msgstr "파일을 찾을 수 없습니다"
 
 #: app/templates/404.html:3 app/templates/500.html:6
 msgid "Back"
-msgstr "Volver"
+msgstr "뒤로"
 
 #: app/templates/500.html:2
 msgid "An unexpected error has occurred"
-msgstr "Ha ocurrido un error inesperado"
+msgstr "예상치 못한 오류가 발생했습니다"
 
 #: app/templates/500.html:4
 msgid "The administrator has been notified. Sorry for the inconvenience!"
-msgstr "El administrador ha sido notificado. ¡Lamentamos la inconveniencia!"
+msgstr "관리자에게 알려졌습니다. 불편을 끼쳐 드려 죄송합니다!"
 
 #: app/templates/_post.html:5
 msgid "User Avatar"
-msgstr "Avatar de usuario"
+msgstr "사용자 아바타"
 
 #: app/templates/_post.html:13
 #, python-format
 msgid "%(username)s said"
-msgstr "%(username)s dijo"
+msgstr "%(username)s님이 말했습니다"
 
 #: app/templates/_post.html:18
 msgid "Posted on"
-msgstr "Publicado en"
+msgstr "게시일"
 
 #: app/templates/base.html:9
 msgid "Welcome to SWESphere!"
-msgstr "¡Bienvenido a SWESphere!"
+msgstr "SWESphere에 오신 것을 환영합니다!"
 
 #: app/templates/base.html:76
 msgid "Toggle navigation"
-msgstr "Navegación de palanca"
+msgstr "내비게이션 토글"
 
 #: app/templates/base.html:106
 msgid "Login"
-msgstr "Ingresar"
+msgstr "로그인"
 
 #: app/templates/base.html:115
 msgid "Profile"
-msgstr "Perfil"
+msgstr "프로필"
 
 #: app/templates/base.html:123
 msgid "Logout"
-msgstr "Salir"
+msgstr "로그아웃"
 
 #: app/templates/index.html:2
 #, python-format
 msgid "Hi, %(username)s!"
-msgstr "¡Hola, %(username)s!"
+msgstr "안녕하세요, %(username)s님!"
 
 #: app/templates/login.html:29
 #, fuzzy
 msgid "Forgot Your Password?"
-msgstr "Nueva Contraseña"
+msgstr "비밀번호 재설정"
 
 #: app/templates/login.html:31
 msgid "Click to Reset It"
@@ -209,40 +207,40 @@ msgstr ""
 #: app/templates/login.html:35
 #, fuzzy
 msgid "New User?"
-msgstr "Usuario"
+msgstr "사용자"
 
 #: app/templates/login.html:36
 #, fuzzy
 msgid "Click to Register!"
-msgstr "Registrarse"
+msgstr "회원가입"
 
 #: app/templates/user.html:4
 msgid "User"
-msgstr "Usuario"
+msgstr "사용자"
 
 #: app/templates/user.html:8
 msgid "Last seen"
-msgstr "Última vez visto"
+msgstr "마지막 접속"
 
 #: app/templates/user.html:9
 #, python-format
 msgid "%(count)d followers"
-msgstr "%(count)d seguidores"
+msgstr "%(count)d명의 팔로워"
 
 #: app/templates/user.html:9
 #, python-format
 msgid "%(count)d following"
-msgstr "%(count)d siguiendo"
+msgstr "%(count)d명을 팔로잉"
 
 #: app/templates/user.html:11
 msgid "Edit your profile"
-msgstr "Edita tu perfil"
+msgstr "프로필 편집하기"
 
 #: app/templates/user.html:16
 msgid "Follow"
-msgstr "Seguir"
+msgstr "팔로우"
 
 #: app/templates/user.html:23
 msgid "Unfollow"
-msgstr "Dejar de seguir"
+msgstr "언팔로우"
 

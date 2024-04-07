@@ -1,4 +1,4 @@
-# Spanish translations for PROJECT.
+# Russian translations for PROJECT.
 # Copyright (C) 2024 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
@@ -8,11 +8,12 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2024-04-07 01:48+0000\n"
-"PO-Revision-Date: 2024-04-06 14:44+0000\n"
+"PO-Revision-Date: 2024-04-06 16:36+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: es\n"
-"Language-Team: es <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: ru\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,187 +21,187 @@ msgstr ""
 
 #: app/__init__.py:23
 msgid "Please log in to access this page."
-msgstr "Por favor ingrese para acceder a esta página."
+msgstr "Пожалуйста, войдите, чтобы получить доступ к этой странице."
 
 #: app/email.py:26
 msgid "[SWESphere] Reset Your Password"
-msgstr "[SWESphere] Nueva Contraseña"
+msgstr "[SWESphere] Сбросить пароль"
 
 #: app/forms.py:12 app/forms.py:19 app/forms.py:39
 msgid "Username"
-msgstr "Nombre de usuario"
+msgstr "Имя пользователя"
 
 #: app/forms.py:13 app/forms.py:21 app/forms.py:73
 msgid "Password"
-msgstr "Contraseña"
+msgstr "Пароль"
 
 #: app/forms.py:14
 msgid "Remember Me"
-msgstr "Recordarme"
+msgstr "Запомнить меня"
 
 #: app/forms.py:15 app/routes.py:150 app/templates/login.html:2
 msgid "Sign In"
-msgstr "Ingresar"
+msgstr "Войти"
 
 #: app/forms.py:20 app/forms.py:68
 msgid "Email"
-msgstr "Email"
+msgstr "Электронная почта"
 
 #: app/forms.py:23 app/forms.py:75
 msgid "Repeat Password"
-msgstr "Repetir Contraseña"
+msgstr "Повторите пароль"
 
 #: app/forms.py:25 app/routes.py:200
 msgid "Register"
-msgstr "Registrarse"
+msgstr "Регистрация"
 
 #: app/forms.py:30 app/forms.py:53
 msgid "Please use a different username."
-msgstr "Por favor use un nombre de usuario diferente."
+msgstr "Пожалуйста, используйте другое имя пользователя."
 
 #: app/forms.py:35
 msgid "Please use a different email address."
-msgstr "Por favor use una dirección de email diferente."
+msgstr "Пожалуйста, используйте другой адрес электронной почты."
 
 #: app/forms.py:40
 msgid "About me"
-msgstr "Acerca de mí"
+msgstr "Обо мне"
 
 #: app/forms.py:41 app/forms.py:57 app/forms.py:64
 msgid "Submit"
-msgstr "Enviar"
+msgstr "Отправить"
 
 #: app/forms.py:62
 msgid "What's happening?"
-msgstr "¿Qué pasa?"
+msgstr "Что происходит?"
 
 #: app/forms.py:69
 msgid "Request Password Reset"
-msgstr "Pedir una nueva contraseña"
+msgstr "Запросить сброс пароля"
 
 #: app/forms.py:77 app/routes.py:391
 msgid "Reset Password"
-msgstr "Nueva Contraseña"
+msgstr "Сбросить пароль"
 
 #: app/routes.py:53
 msgid "Your post is now live!"
-msgstr "¡Tu artículo ha sido publicado!"
+msgstr "Ваш пост теперь в эфире!"
 
 #: app/routes.py:68 app/templates/base.html:87
 msgid "Home"
-msgstr "Inicio"
+msgstr "Главная"
 
 #: app/routes.py:106 app/templates/base.html:95
 msgid "Explore"
-msgstr "Explorar"
+msgstr "Исследовать"
 
 #: app/routes.py:139
 msgid "Invalid username or password"
-msgstr "Nombre de usuario o contraseña inválidos"
+msgstr "Неверное имя пользователя или пароль"
 
 #: app/routes.py:193
 msgid "Congratulations, you are now a registered user!"
-msgstr "¡Felicitaciones, ya eres un usuario registrado!"
+msgstr "Поздравляем, теперь вы зарегистрированный пользователь!"
 
 #: app/routes.py:287
 msgid "Your changes have been saved."
-msgstr "Tus cambios han sido guardados."
+msgstr "Ваши изменения были сохранены."
 
 #: app/routes.py:296 app/templates/edit_profile.html:2
 msgid "Edit Profile"
-msgstr "Editar Perfil"
+msgstr "Редактировать профиль"
 
 #: app/routes.py:330 app/routes.py:350
 #, python-format
 msgid "User %(username)s not found."
-msgstr "El usuario %(username)s no ha sido encontrado."
+msgstr "Пользователь %(username)s не найден."
 
 #: app/routes.py:333
 msgid "You cannot follow yourself!"
-msgstr "¡No puedes seguirte a ti mismo!"
+msgstr "Вы не можете подписаться на себя!"
 
 #: app/routes.py:337
 #, python-format
 msgid "You are following %(username)s!"
-msgstr "¡Ahora estás siguiendo a %(username)s!"
+msgstr "Вы подписаны на %(username)s!"
 
 #: app/routes.py:353
 msgid "You cannot unfollow yourself!"
-msgstr "¡No puedes dejar de seguirte a ti mismo!"
+msgstr "Вы не можете отписаться от себя!"
 
 #: app/routes.py:357
 #, python-format
 msgid "You are not following %(username)s."
-msgstr "No estás siguiendo a %(username)s."
+msgstr "Вы не подписаны на %(username)s."
 
 #: app/routes.py:382
 msgid "If an account matches your email, we'll send password reset instructions."
 msgstr ""
-"Si una cuenta coincide con su correo electrónico, le enviaremos "
-"instrucciones para restablecer la contraseña."
+"Если аккаунт соответствует вашему электронному адресу, мы отправим "
+"инструкции по сбросу пароля."
 
 #: app/routes.py:423
 msgid "Your password has been reset."
-msgstr "Tu contraseña ha sido cambiada."
+msgstr "Ваш пароль был сброшен."
 
 #: app/templates/404.html:2
 msgid "File Not Found"
-msgstr "Archivo no encontrado"
+msgstr "Файл не найден"
 
 #: app/templates/404.html:3 app/templates/500.html:6
 msgid "Back"
-msgstr "Volver"
+msgstr "Назад"
 
 #: app/templates/500.html:2
 msgid "An unexpected error has occurred"
-msgstr "Ha ocurrido un error inesperado"
+msgstr "Произошла неожиданная ошибка"
 
 #: app/templates/500.html:4
 msgid "The administrator has been notified. Sorry for the inconvenience!"
-msgstr "El administrador ha sido notificado. ¡Lamentamos la inconveniencia!"
+msgstr "Администратор был уведомлен. Извините за неудобства!"
 
 #: app/templates/_post.html:5
 msgid "User Avatar"
-msgstr "Avatar de usuario"
+msgstr "Аватар пользователя"
 
 #: app/templates/_post.html:13
 #, python-format
 msgid "%(username)s said"
-msgstr "%(username)s dijo"
+msgstr "%(username)s сказал(а)"
 
 #: app/templates/_post.html:18
 msgid "Posted on"
-msgstr "Publicado en"
+msgstr "Опубликовано"
 
 #: app/templates/base.html:9
 msgid "Welcome to SWESphere!"
-msgstr "¡Bienvenido a SWESphere!"
+msgstr "Добро пожаловать в SWESphere!"
 
 #: app/templates/base.html:76
 msgid "Toggle navigation"
-msgstr "Navegación de palanca"
+msgstr "Переключить навигацию"
 
 #: app/templates/base.html:106
 msgid "Login"
-msgstr "Ingresar"
+msgstr "Войти"
 
 #: app/templates/base.html:115
 msgid "Profile"
-msgstr "Perfil"
+msgstr "Профиль"
 
 #: app/templates/base.html:123
 msgid "Logout"
-msgstr "Salir"
+msgstr "Выйти"
 
 #: app/templates/index.html:2
 #, python-format
 msgid "Hi, %(username)s!"
-msgstr "¡Hola, %(username)s!"
+msgstr "Привет, %(username)s!"
 
 #: app/templates/login.html:29
 #, fuzzy
 msgid "Forgot Your Password?"
-msgstr "Nueva Contraseña"
+msgstr "Сбросить пароль"
 
 #: app/templates/login.html:31
 msgid "Click to Reset It"
@@ -209,40 +210,40 @@ msgstr ""
 #: app/templates/login.html:35
 #, fuzzy
 msgid "New User?"
-msgstr "Usuario"
+msgstr "Пользователь"
 
 #: app/templates/login.html:36
 #, fuzzy
 msgid "Click to Register!"
-msgstr "Registrarse"
+msgstr "Регистрация"
 
 #: app/templates/user.html:4
 msgid "User"
-msgstr "Usuario"
+msgstr "Пользователь"
 
 #: app/templates/user.html:8
 msgid "Last seen"
-msgstr "Última vez visto"
+msgstr "Последний раз был(а)"
 
 #: app/templates/user.html:9
 #, python-format
 msgid "%(count)d followers"
-msgstr "%(count)d seguidores"
+msgstr "%(count)d подписчиков"
 
 #: app/templates/user.html:9
 #, python-format
 msgid "%(count)d following"
-msgstr "%(count)d siguiendo"
+msgstr "Подписан(а) на %(count)d"
 
 #: app/templates/user.html:11
 msgid "Edit your profile"
-msgstr "Edita tu perfil"
+msgstr "Редактировать ваш профиль"
 
 #: app/templates/user.html:16
 msgid "Follow"
-msgstr "Seguir"
+msgstr "Подписаться"
 
 #: app/templates/user.html:23
 msgid "Unfollow"
-msgstr "Dejar de seguir"
+msgstr "Отписаться"
 
