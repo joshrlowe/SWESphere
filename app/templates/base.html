@@ -23,12 +23,29 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/relativeTime.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/utc.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.3/locale/es.js"></script>
-    <script nonce="{{ nonce }}">
-      dayjs.extend(dayjs_plugin_relativeTime);
-      dayjs.extend(dayjs_plugin_utc);
-      dayjs.locale(navigator.language); //
-      document.addEventListener("DOMContentLoaded", () => {
+    <script defer nonce="{{ nonce }}">
+      function loadScript(url, callback) {
+        const script = document.createElement("script");
+        script.src = url;
+        script.onload = () => {
+          if (typeof callback === "function") {
+            callback();
+          }
+        };
+        script.onerror = (error) => {
+          console.error("Error loading script: ${url}", error);
+        };
+        document.head.appendChild(script);
+      }
+
+      const userLang =
+        navigator.language.split("-")[0] || navigator.userLanguage;
+      const localeScript =
+        "https://cdn.jsdelivr.net/npm/dayjs@1.11.3/locale/" + userLang + ".js";
+      loadScript(localeScript, function () {
+        dayjs.extend(dayjs_plugin_relativeTime);
+        dayjs.extend(dayjs_plugin_utc);
+        dayjs.locale(userLang);
         document.querySelectorAll(".post-time").forEach((element) => {
           const timestamp = element.getAttribute("data-timestamp");
           if (timestamp) {
