@@ -1,0 +1,49 @@
+{% extends "base.html" %} {% block content %}
+<h1>{{ _('Search Results for "%(query)s"', query=query) }}</h1>
+
+{% if users %}
+<h2>{{ _('Users') }}</h2>
+<div class="list-group mb-4">
+  {% for user in users %}
+  <a href="{{ url_for('user', username=user.username) }}" class="list-group-item list-group-item-action">
+    <div class="d-flex align-items-center">
+      <img src="{{ user.avatar(48) }}" alt="{{ user.username }}" class="rounded-circle me-3" style="width: 48px; height: 48px;">
+      <div>
+        <strong>{{ user.username }}</strong>
+        {% if user.about_me %}
+        <p class="mb-0 text-muted small">{{ user.about_me[:100] }}{% if user.about_me|length > 100 %}...{% endif %}</p>
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if posts %}
+<h2>{{ _('Posts') }}</h2>
+{% for post in posts %}
+{% include '_post.html' %}
+{% endfor %}
+
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+    {% if prev_url %}
+    <li class="page-item">
+      <a class="page-link" href="{{ prev_url }}">{{ _('Previous') }}</a>
+    </li>
+    {% endif %}
+    {% if next_url %}
+    <li class="page-item">
+      <a class="page-link" href="{{ next_url }}">{{ _('Next') }}</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+{% if not users and not posts %}
+<p class="text-muted">{{ _('No results found.') }}</p>
+{% endif %}
+
+{% endblock %}
