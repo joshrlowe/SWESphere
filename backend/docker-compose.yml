@@ -1,0 +1,189 @@
+version: "3.9"
+
+services:
+  # ===================
+  # FastAPI Application
+  # ===================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: swesphere-api
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/swesphere
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-development-secret-key-change-in-prod}
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+      - ./app:/app/app:ro # Hot reload in development
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - swesphere-network
+
+  # ===================
+  # Celery Worker
+  # ===================
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: swesphere-celery-worker
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - APP_ENV=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/swesphere
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-development-secret-key-change-in-prod}
+    env_file:
+      - .env
+    depends_on:
+      - api
+      - redis
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - swesphere-network
+
+  # ===================
+  # Celery Beat (Scheduler)
+  # ===================
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: swesphere-celery-beat
+    command: celery -A app.workers.celery_app beat --loglevel=info
+    environment:
+      - APP_ENV=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/swesphere
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-development-secret-key-change-in-prod}
+    env_file:
+      - .env
+    depends_on:
+      - api
+      - redis
+    restart: unless-stopped
+    networks:
+      - swesphere-network
+
+  # ===================
+  # PostgreSQL Database
+  # ===================
+  db:
+    image: postgres:16-alpine
+    container_name: swesphere-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: swesphere
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432" # Using 5433 on host to avoid conflicts
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d swesphere" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - swesphere-network
+
+  # ===================
+  # Redis
+  # ===================
+  redis:
+    image: redis:7-alpine
+    container_name: swesphere-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - swesphere-network
+
+  # ===================
+  # Redis Commander (Dev UI)
+  # ===================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: swesphere-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    profiles:
+      - dev
+    networks:
+      - swesphere-network
+
+  # ===================
+  # Adminer (Database UI)
+  # ===================
+  adminer:
+    image: adminer:latest
+    container_name: swesphere-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    profiles:
+      - dev
+    networks:
+      - swesphere-network
+
+# ===================
+# Networks
+# ===================
+networks:
+  swesphere-network:
+    driver: bridge
+
+# ===================
+# Volumes
+# ===================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
