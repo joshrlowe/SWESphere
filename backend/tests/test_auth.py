@@ -34,7 +34,10 @@ async def test_register_duplicate_email(client: AsyncClient, test_user: dict) ->
         },
     )
     assert response.status_code == 400
-    assert "already registered" in response.json()["detail"]
+    data = response.json()
+    # API returns error in {"error": {"message": "..."}} format
+    assert "error" in data
+    assert "already registered" in data["error"]["message"].lower()
 
 
 @pytest.mark.asyncio
@@ -51,7 +54,10 @@ async def test_register_duplicate_username(
         },
     )
     assert response.status_code == 400
-    assert "already taken" in response.json()["detail"]
+    data = response.json()
+    # API returns error in {"error": {"message": "..."}} format
+    assert "error" in data
+    assert "already taken" in data["error"]["message"].lower()
 
 
 @pytest.mark.asyncio
@@ -89,7 +95,7 @@ async def test_login_wrong_password(client: AsyncClient, test_user: dict) -> Non
 async def test_get_me(client: AsyncClient, auth_headers: dict, test_user: dict) -> None:
     """Test getting current user."""
     response = await client.get(
-        "/api/v1/auth/me",
+        "/api/v1/users/me",
         headers=auth_headers,
     )
     assert response.status_code == 200
@@ -101,5 +107,5 @@ async def test_get_me(client: AsyncClient, auth_headers: dict, test_user: dict) 
 @pytest.mark.asyncio
 async def test_get_me_unauthorized(client: AsyncClient) -> None:
     """Test getting current user without auth."""
-    response = await client.get("/api/v1/auth/me")
+    response = await client.get("/api/v1/users/me")
     assert response.status_code == 401

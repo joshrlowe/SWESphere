@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.core.pagination import calculate_pages
+
 if TYPE_CHECKING:
     from app.models.user import User
 
@@ -182,27 +184,14 @@ class UserListResponse(BaseModel):
         per_page: int,
     ) -> "UserListResponse":
         """Create a paginated response from a list of User models."""
-        pages = _calculate_pages(total, per_page)
         items = [UserPublic.from_model(u) for u in users]
         return cls(
             items=items,
             total=total,
             page=page,
             per_page=per_page,
-            pages=pages,
+            pages=calculate_pages(total, per_page),
         )
-
-
-# =============================================================================
-# Helpers
-# =============================================================================
-
-
-def _calculate_pages(total: int, per_page: int) -> int:
-    """Calculate total number of pages for pagination."""
-    if per_page <= 0:
-        return 0
-    return (total + per_page - 1) // per_page
 
 
 # Alias for backwards compatibility

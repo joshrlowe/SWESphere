@@ -53,8 +53,10 @@ async def test_get_explore(client: AsyncClient, auth_headers: dict) -> None:
     response = await client.get("/api/v1/posts/explore")
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 1
+    # API returns paginated response with "items" key
+    assert "items" in data
+    assert isinstance(data["items"], list)
+    assert len(data["items"]) >= 1
 
 
 @pytest.mark.asyncio
@@ -108,12 +110,12 @@ async def test_like_post(client: AsyncClient, auth_headers: dict) -> None:
     )
     post_id = create_response.json()["id"]
 
-    # Like the post
+    # Like the post - API returns 200 with message
     response = await client.post(
         f"/api/v1/posts/{post_id}/like",
         headers=auth_headers,
     )
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # Verify like is reflected
     get_response = await client.get(
@@ -139,12 +141,12 @@ async def test_unlike_post(client: AsyncClient, auth_headers: dict) -> None:
         headers=auth_headers,
     )
 
-    # Unlike the post
+    # Unlike the post - API returns 200 with message
     response = await client.delete(
         f"/api/v1/posts/{post_id}/like",
         headers=auth_headers,
     )
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # Verify unlike is reflected
     get_response = await client.get(

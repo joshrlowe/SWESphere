@@ -5,38 +5,26 @@ Handles user profile management, avatar uploads, follow relationships,
 and user discovery.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import uuid
-from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from fastapi import HTTPException, UploadFile, status
 
 from app.config import settings
+from app.core.pagination import PaginatedResult, calculate_skip
 from app.core.security import hash_password, verify_password
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserPasswordUpdate, UserUpdate
 
+if TYPE_CHECKING:
+    from app.services.notification_service import NotificationService
+
 logger = logging.getLogger(__name__)
-
-
-# =============================================================================
-# Response Types
-# =============================================================================
-
-
-@dataclass
-class PaginatedUsers:
-    """Paginated list of users."""
-
-    users: list[User]
-    total: int
-    page: int
-    per_page: int
-    has_next: bool
-    has_prev: bool
 
 
 # =============================================================================
@@ -397,7 +385,7 @@ class UserService:
         *,
         page: int = 1,
         per_page: int = 20,
-    ) -> PaginatedUsers:
+    ) -> PaginatedResult[User]:
         """
         Get user's followers with pagination.
 
@@ -407,20 +395,18 @@ class UserService:
             per_page: Items per page
 
         Returns:
-            PaginatedUsers with followers and metadata
+            PaginatedResult with followers and metadata
         """
-        skip = (page - 1) * per_page
+        skip = calculate_skip(page, per_page)
         followers, total = await self.user_repo.get_followers_paginated(
             user_id, skip=skip, limit=per_page
         )
 
-        return PaginatedUsers(
-            users=list(followers),
+        return PaginatedResult.create(
+            items=list(followers),
             total=total,
             page=page,
             per_page=per_page,
-            has_next=skip + len(followers) < total,
-            has_prev=page > 1,
         )
 
     async def get_following(
@@ -429,7 +415,7 @@ class UserService:
         *,
         page: int = 1,
         per_page: int = 20,
-    ) -> PaginatedUsers:
+    ) -> PaginatedResult[User]:
         """
         Get users that this user is following with pagination.
 
@@ -439,20 +425,18 @@ class UserService:
             per_page: Items per page
 
         Returns:
-            PaginatedUsers with following and metadata
+            PaginatedResult with following and metadata
         """
-        skip = (page - 1) * per_page
+        skip = calculate_skip(page, per_page)
         following, total = await self.user_repo.get_following_paginated(
             user_id, skip=skip, limit=per_page
         )
 
-        return PaginatedUsers(
-            users=list(following),
+        return PaginatedResult.create(
+            items=list(following),
             total=total,
             page=page,
             per_page=per_page,
-            has_next=skip + len(following) < total,
-            has_prev=page > 1,
         )
 
     # =========================================================================
@@ -465,7 +449,7 @@ class UserService:
         *,
         page: int = 1,
         per_page: int = 20,
-    ) -> PaginatedUsers:
+    ) -> PaginatedResult[User]:
         """
         Search users by username or display name.
 
@@ -475,20 +459,18 @@ class UserService:
             per_page: Items per page
 
         Returns:
-            PaginatedUsers with search results
+            PaginatedResult with search results
         """
-        skip = (page - 1) * per_page
+        skip = calculate_skip(page, per_page)
         users, total = await self.user_repo.search_users(
             query, skip=skip, limit=per_page
         )
 
-        return PaginatedUsers(
-            users=list(users),
+        return PaginatedResult.create(
+            items=list(users),
             total=total,
             page=page,
             per_page=per_page,
-            has_next=skip + len(users) < total,
-            has_prev=page > 1,
         )
 
     async def get_suggested_users(
@@ -519,10 +501,3 @@ class UserService:
         )
 
         return list(suggestions)
-
-
-# For type hints
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.services.notification_service import NotificationService

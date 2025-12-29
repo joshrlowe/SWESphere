@@ -4,6 +4,7 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
+from app.core.pagination import calculate_pages
 
 T = TypeVar("T")
 
@@ -65,12 +66,11 @@ class PaginatedResponse(BaseModel, Generic[T]):
         per_page: int,
     ) -> "PaginatedResponse[T]":
         """Create a paginated response with computed pages."""
-        pages = (total + per_page - 1) // per_page if per_page > 0 else 0
         return cls(
             items=items,
             total=total,
             page=page,
             per_page=per_page,
-            pages=pages,
+            pages=calculate_pages(total, per_page),
         )
 

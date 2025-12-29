@@ -4,6 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.core.pagination import calculate_pages
 from app.schemas.user import UserMinimal
 
 
@@ -67,13 +68,12 @@ class PostListResponse(BaseModel):
         per_page: int,
     ) -> "PostListResponse":
         """Create a paginated response."""
-        pages = (total + per_page - 1) // per_page if per_page > 0 else 0
         return cls(
             items=posts,
             total=total,
             page=page,
             per_page=per_page,
-            pages=pages,
+            pages=calculate_pages(total, per_page),
         )
 
 
@@ -122,13 +122,12 @@ class CommentListResponse(BaseModel):
         per_page: int,
     ) -> "CommentListResponse":
         """Create a paginated response."""
-        pages = (total + per_page - 1) // per_page if per_page > 0 else 0
         return cls(
             items=[CommentResponse.model_validate(c) for c in comments],
             total=total,
             page=page,
             per_page=per_page,
-            pages=pages,
+            pages=calculate_pages(total, per_page),
         )
 
 

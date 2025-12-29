@@ -8,15 +8,15 @@ and mention processing.
 import html
 import logging
 import re
-from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 from redis.asyncio import Redis
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
+from app.core.pagination import PaginatedResult, calculate_skip
 from app.core.redis_keys import redis_keys
 from app.models.comment import Comment
 from app.models.post import Post
@@ -28,73 +28,6 @@ if TYPE_CHECKING:
     from app.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
-
-T = TypeVar("T")
-
-
-# =============================================================================
-# Pagination Helpers
-# =============================================================================
-
-
-def calculate_skip(page: int, per_page: int) -> int:
-    """Calculate offset for database query from page number."""
-    return (page - 1) * per_page
-
-
-def has_next_page(skip: int, items_count: int, total: int) -> bool:
-    """Check if there are more pages after the current one."""
-    return skip + items_count < total
-
-
-def has_prev_page(page: int) -> bool:
-    """Check if there are pages before the current one."""
-    return page > 1
-
-
-# =============================================================================
-# Response Types
-# =============================================================================
-
-
-@dataclass
-class PaginatedResult:
-    """Generic paginated result container."""
-
-    items: list[Any]
-    total: int
-    page: int
-    per_page: int
-    has_next: bool
-    has_prev: bool
-
-    @classmethod
-    def create(
-        cls,
-        items: list[Any],
-        total: int,
-        page: int,
-        per_page: int,
-    ) -> "PaginatedResult":
-        """Create a paginated result with computed navigation flags."""
-        skip = calculate_skip(page, per_page)
-        return cls(
-            items=items,
-            total=total,
-            page=page,
-            per_page=per_page,
-            has_next=has_next_page(skip, len(items), total),
-            has_prev=has_prev_page(page),
-        )
-
-    @property
-    def posts(self) -> list[Post]:
-        """Alias for items when used with posts (backward compatibility)."""
-        return self.items
-
-
-# Alias for backward compatibility
-PaginatedPosts = PaginatedResult
 
 
 # =============================================================================

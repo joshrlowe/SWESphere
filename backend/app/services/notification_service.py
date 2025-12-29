@@ -14,6 +14,7 @@ from redis.asyncio import Redis
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.pagination import PaginatedResult, calculate_skip
 from app.core.redis_keys import redis_keys
 from app.models.notification import Notification, NotificationType
 
@@ -21,21 +22,43 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# Response Types
+# Extended Pagination for Notifications
 # =============================================================================
 
 
 @dataclass
-class PaginatedNotifications:
-    """Paginated list of notifications."""
-
-    notifications: list[Notification]
-    total: int
-    page: int
-    per_page: int
-    has_next: bool
-    has_prev: bool
-    unread_count: int
+class PaginatedNotifications(PaginatedResult[Notification]):
+    """
+    Paginated notifications with unread count.
+    
+    Extends PaginatedResult to include the unread_count field
+    specific to notifications.
+    """
+    
+    unread_count: int = 0
+    
+    @classmethod
+    def create_with_unread(
+        cls,
+        items: list[Notification],
+        total: int,
+        page: int,
+        per_page: int,
+        unread_count: int,
+    ) -> "PaginatedNotifications":
+        """Create paginated notifications with unread count."""
+        from app.core.pagination import calculate_pages, has_next_page, has_prev_page
+        
+        return cls(
+            items=items,
+            total=total,
+            page=page,
+            per_page=per_page,
+            pages=calculate_pages(total, per_page),
+            has_next=has_next_page(page, per_page, total),
+            has_prev=has_prev_page(page),
+            unread_count=unread_count,
+        )
 
 
 # =============================================================================
@@ -140,7 +163,7 @@ class NotificationService:
         Returns:
             PaginatedNotifications with notifications and metadata
         """
-        skip = (page - 1) * per_page
+        skip = calculate_skip(page, per_page)
 
         # Build base query
         base_query = select(Notification).where(Notification.user_id == user_id)
@@ -165,13 +188,11 @@ class NotificationService:
         # Get unread count
         unread_count = await self.get_unread_count(user_id)
 
-        return PaginatedNotifications(
-            notifications=notifications,
+        return PaginatedNotifications.create_with_unread(
+            items=notifications,
             total=total,
             page=page,
             per_page=per_page,
-            has_next=skip + len(notifications) < total,
-            has_prev=page > 1,
             unread_count=unread_count,
         )
 

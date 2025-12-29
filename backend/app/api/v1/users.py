@@ -139,7 +139,7 @@ async def search_users(
     """
     result = await user_service.search_users(q, page=page, per_page=per_page)
     return UserListResponse.create(
-        users=result.users,
+        users=result.items,
         total=result.total,
         page=page,
         per_page=per_page,
@@ -263,7 +263,7 @@ async def get_followers(
     user = await user_service.get_user_by_username(username)
     result = await user_service.get_followers(user.id, page=page, per_page=per_page)
     return UserListResponse.create(
-        users=result.users,
+        users=result.items,
         total=result.total,
         page=page,
         per_page=per_page,
@@ -289,7 +289,7 @@ async def get_following(
     user = await user_service.get_user_by_username(username)
     result = await user_service.get_following(user.id, page=page, per_page=per_page)
     return UserListResponse.create(
-        users=result.users,
+        users=result.items,
         total=result.total,
         page=page,
         per_page=per_page,

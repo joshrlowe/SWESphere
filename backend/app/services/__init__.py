@@ -8,13 +8,14 @@ Services handle:
 - Caching logic
 """
 
+from app.core.pagination import PaginatedResult
 from app.services.auth_service import AuthService
 from app.services.notification_service import (
     NotificationService,
     PaginatedNotifications,
 )
-from app.services.post_service import PaginatedPosts, PostService
-from app.services.user_service import PaginatedUsers, UserService
+from app.services.post_service import PostService
+from app.services.user_service import UserService
 
 __all__ = [
     # Services
@@ -22,8 +23,7 @@ __all__ = [
     "UserService",
     "PostService",
     "NotificationService",
-    # Response types
-    "PaginatedUsers",
-    "PaginatedPosts",
+    # Pagination (consolidated)
+    "PaginatedResult",
     "PaginatedNotifications",
 ]

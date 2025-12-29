@@ -147,7 +147,7 @@ async def get_feed(
     Cached for performance with 5-minute TTL.
     """
     result = await post_service.get_home_feed(current_user.id, page=page, per_page=per_page)
-    posts = await _build_post_list(result.posts, post_service, current_user)
+    posts = await _build_post_list(result.items, post_service, current_user)
     return _create_post_list_response(posts, result.total, page, per_page)
 
 
@@ -170,7 +170,7 @@ async def get_explore(
     Authenticated users will see personalized like status.
     """
     result = await post_service.get_explore_feed(page=page, per_page=per_page)
-    posts = await _build_post_list(result.posts, post_service, current_user)
+    posts = await _build_post_list(result.items, post_service, current_user)
     return _create_post_list_response(posts, result.total, page, per_page)
 
 
@@ -193,7 +193,7 @@ async def search_posts(
     Returns posts matching the search query, ordered by relevance.
     """
     result = await post_service.search_posts(q, page=page, per_page=per_page)
-    posts = await _build_post_list(result.posts, post_service, current_user)
+    posts = await _build_post_list(result.items, post_service, current_user)
     return _create_post_list_response(posts, result.total, page, per_page)
 
 
@@ -338,7 +338,7 @@ async def get_replies(
     Replies are ordered by most recent first.
     """
     result = await post_service.get_replies(post_id, page=page, per_page=per_page)
-    posts = await _build_post_list(result.posts, post_service, current_user)
+    posts = await _build_post_list(result.items, post_service, current_user)
     return _create_post_list_response(posts, result.total, page, per_page)
 
 
@@ -543,5 +543,5 @@ async def get_user_posts(
         per_page=per_page,
         include_replies=include_replies,
     )
-    posts = await _build_post_list(result.posts, post_service, current_user)
+    posts = await _build_post_list(result.items, post_service, current_user)
     return _create_post_list_response(posts, result.total, page, per_page)
