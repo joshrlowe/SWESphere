@@ -58,6 +58,24 @@ class PostListResponse(BaseModel):
     per_page: int
     pages: int
 
+    @classmethod
+    def create(
+        cls,
+        posts: list[PostResponse],
+        total: int,
+        page: int,
+        per_page: int,
+    ) -> "PostListResponse":
+        """Create a paginated response."""
+        pages = (total + per_page - 1) // per_page if per_page > 0 else 0
+        return cls(
+            items=posts,
+            total=total,
+            page=page,
+            per_page=per_page,
+            pages=pages,
+        )
+
 
 class CommentBase(BaseModel):
     """Base comment schema."""
@@ -94,3 +112,28 @@ class CommentListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+
+    @classmethod
+    def create(
+        cls,
+        comments: list,
+        total: int,
+        page: int,
+        per_page: int,
+    ) -> "CommentListResponse":
+        """Create a paginated response."""
+        pages = (total + per_page - 1) // per_page if per_page > 0 else 0
+        return cls(
+            items=[CommentResponse.model_validate(c) for c in comments],
+            total=total,
+            page=page,
+            per_page=per_page,
+            pages=pages,
+        )
+
+
+class PostDetailResponse(PostResponse):
+    """Post response with comments included."""
+
+    comments: list[CommentResponse] = []
+    comments_total: int = 0
