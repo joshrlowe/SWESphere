@@ -1,22 +1,24 @@
 """
-User service.
+User service for profile management, social relationships, and user discovery.
 
-Core user operations including:
-- Profile retrieval and updates
+Responsibilities:
+- Profile CRUD operations with caching
 - Avatar management (delegated to AvatarService)
-- Follow/unfollow relationships
-- User discovery and search
+- Follow/unfollow relationships with notifications
+- User search and discovery
 
-Caching Strategy:
-- Profiles: Cache-aside with 5 min TTL
-- Follower/following counts: Write-through counters
+Caching:
+- Profiles: Cache-aside with 5-minute TTL
+- Counts: Write-through counters with 1-hour TTL
 - Username lookups: Cached ID mappings
 """
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from collections.abc import Awaitable, Callable, Sequence
+from enum import Enum
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from app.core.pagination import PaginatedResult, calculate_skip
 from app.core.redis_keys import CacheKeys
@@ -32,14 +34,13 @@ from app.services.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from fastapi import UploadFile
 
     from app.models.user import User
     from app.services.cache_invalidation import CacheInvalidator
     from app.services.cache_service import CacheService
     from app.services.notification_service import NotificationService
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +49,42 @@ logger = logging.getLogger(__name__)
 # Constants
 # =============================================================================
 
-USER_PROFILE_TTL = 300  # 5 minutes
-USER_COUNTS_TTL = 3600  # 1 hour
+PROFILE_CACHE_TTL = 300  # 5 minutes
+COUNTS_CACHE_TTL = 3600  # 1 hour
+
+
+# =============================================================================
+# Types
+# =============================================================================
+
+
+class UserProfile(TypedDict):
+    """Serialized user profile for caching."""
+
+    id: int
+    username: str
+    email: str
+    display_name: str | None
+    bio: str | None
+    avatar_url: str | None
+    location: str | None
+    website: str | None
+    followers_count: int
+    following_count: int
+    posts_count: int
+    is_verified: bool
+    created_at: str | None
+
+
+class _CountType(Enum):
+    """User count types for cache operations."""
+
+    FOLLOWERS = "followers_count"
+    FOLLOWING = "following_count"
+
+
+# Type alias for paginated repository queries
+PaginatedQuery = Callable[[int, int], Awaitable[tuple[Sequence[Any], int]]]
 
 
 # =============================================================================
@@ -59,112 +94,77 @@ USER_COUNTS_TTL = 3600  # 1 hour
 
 class UserService:
     """
-    Service for user operations.
+    Orchestrates user operations with caching and notifications.
 
-    This class orchestrates user-related business logic, delegating
-    specialized concerns to dedicated services:
-    - Avatar handling → AvatarService
-    - Caching → CacheService + CacheInvalidator
-    - Notifications → NotificationService
-    - Data access → UserRepository
-
-    Design Principles:
-    - Single Responsibility: Orchestrates user operations
-    - Dependency Injection: All dependencies are injectable
-    - Graceful Degradation: Works without optional dependencies
+    Uses dependency injection for all collaborators, enabling testing
+    and graceful degradation when optional services are unavailable.
     """
+
+    __slots__ = ("_repo", "_notifications", "_avatar", "_cache", "_invalidator")
 
     def __init__(
         self,
         user_repo: UserRepository,
-        notification_service: "NotificationService | None" = None,
+        notification_service: NotificationService | None = None,
         avatar_service: AvatarService | None = None,
-        cache: "CacheService | None" = None,
-        cache_invalidator: "CacheInvalidator | None" = None,
+        cache: CacheService | None = None,
+        cache_invalidator: CacheInvalidator | None = None,
     ) -> None:
-        """
-        Initialize user service.
-
-        Args:
-            user_repo: Repository for user data access
-            notification_service: Service for sending notifications
-            avatar_service: Service for avatar operations
-            cache: Service for cache operations
-            cache_invalidator: Service for cache invalidation
-        """
         self._repo = user_repo
         self._notifications = notification_service
         self._avatar = avatar_service or AvatarService()
         self._cache = cache
         self._invalidator = cache_invalidator
 
-    # =========================================================================
+    # -------------------------------------------------------------------------
     # Properties (backward compatibility)
-    # =========================================================================
+    # -------------------------------------------------------------------------
 
     @property
     def user_repo(self) -> UserRepository:
-        """User repository (for backward compatibility)."""
+        """User repository accessor."""
         return self._repo
 
     @property
-    def notification_service(self) -> "NotificationService | None":
-        """Notification service (for backward compatibility)."""
+    def notification_service(self) -> NotificationService | None:
+        """Notification service accessor."""
         return self._notifications
 
     # =========================================================================
     # User Retrieval
     # =========================================================================
 
-    async def get_user_by_id(self, user_id: int) -> "User":
+    async def get_user_by_id(self, user_id: int) -> User:
         """
-        Get user by ID.
-
-        Args:
-            user_id: User's ID
-
-        Returns:
-            User object
+        Retrieve user by ID.
 
         Raises:
-            UserNotFoundError: If user not found
+            UserNotFoundError: User does not exist.
         """
         user = await self._repo.get_by_id(user_id)
         if not user:
             raise UserNotFoundError()
         return user
 
-    async def get_user_by_username(self, username: str) -> "User":
+    async def get_user_by_username(self, username: str) -> User:
         """
-        Get user by username with cache optimization.
-
-        Uses username→ID cache mapping for faster lookups.
-
-        Args:
-            username: User's username
-
-        Returns:
-            User object
+        Retrieve user by username with cache optimization.
 
         Raises:
-            UserNotFoundError: If user not found
+            UserNotFoundError: User does not exist.
         """
-        # Try cache first
-        user = await self._get_user_from_username_cache(username)
-        if user:
-            return user
+        if cached_user := await self._lookup_cached_username(username):
+            return cached_user
 
-        # Cache miss - query database
         user = await self._repo.get_by_username(username)
         if not user:
             raise UserNotFoundError()
 
-        # Cache the mapping
         await self._cache_username_mapping(username, user.id)
         return user
 
-    async def _get_user_from_username_cache(self, username: str) -> "User | None":
-        """Attempt to get user via cached username→ID mapping."""
+    async def _lookup_cached_username(self, username: str) -> User | None:
+        """Look up user via cached username→ID mapping."""
         if not self._cache:
             return None
 
@@ -173,8 +173,7 @@ class UserService:
             return None
 
         try:
-            user_id = int(cached_id)
-            user = await self._repo.get_by_id(user_id)
+            user = await self._repo.get_by_id(int(cached_id))
             if user:
                 logger.debug("Cache HIT: username=%s", username)
                 return user
@@ -184,129 +183,108 @@ class UserService:
         return None
 
     async def _cache_username_mapping(self, username: str, user_id: int) -> None:
-        """Cache username→ID mapping."""
-        if self._cache:
-            await self._cache.set(
-                CacheKeys.user_by_username(username),
-                str(user_id),
-                USER_PROFILE_TTL,
-            )
-            logger.debug("Cache SET: username=%s → id=%d", username, user_id)
+        """Store username→ID mapping in cache."""
+        if not self._cache:
+            return
+        await self._cache.set(
+            CacheKeys.user_by_username(username),
+            str(user_id),
+            PROFILE_CACHE_TTL,
+        )
+        logger.debug("Cache SET: username=%s → id=%d", username, user_id)
 
     # =========================================================================
     # Profile Caching
     # =========================================================================
 
-    async def get_user_profile_cached(self, user_id: int) -> dict[str, Any] | None:
-        """
-        Get cached user profile.
-
-        Returns:
-            Cached profile dict, or None if not cached
-        """
+    async def get_user_profile_cached(self, user_id: int) -> UserProfile | None:
+        """Retrieve cached user profile, or None if not cached."""
         if not self._cache:
             return None
         return await self._cache.get_json(CacheKeys.user(user_id))
 
-    async def cache_user_profile(self, user: "User") -> None:
-        """Cache user profile and username mapping."""
+    async def cache_user_profile(self, user: User) -> None:
+        """Store user profile and username mapping in cache."""
         if not self._cache:
             return
-
-        profile = self._serialize_user_profile(user)
-        await self._cache.set_json(CacheKeys.user(user.id), profile, USER_PROFILE_TTL)
+        profile = self._build_profile(user)
+        await self._cache.set_json(CacheKeys.user(user.id), profile, PROFILE_CACHE_TTL)
         await self._cache_username_mapping(user.username, user.id)
 
     @staticmethod
-    def _serialize_user_profile(user: "User") -> dict[str, Any]:
-        """Serialize user to cacheable dict."""
-        return {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "display_name": user.display_name,
-            "bio": user.bio,
-            "avatar_url": user.avatar_url,
-            "location": getattr(user, "location", None),
-            "website": getattr(user, "website", None),
-            "followers_count": user.followers_count,
-            "following_count": user.following_count,
-            "posts_count": getattr(user, "posts_count", 0),
-            "is_verified": getattr(user, "is_verified", False),
-            "created_at": user.created_at.isoformat() if user.created_at else None,
-        }
+    def _build_profile(user: User) -> UserProfile:
+        """Build cacheable profile dictionary from user model."""
+        return UserProfile(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            display_name=user.display_name,
+            bio=user.bio,
+            avatar_url=user.avatar_url,
+            location=user.location,
+            website=user.website,
+            followers_count=user.followers_count,
+            following_count=user.following_count,
+            posts_count=user.posts_count,
+            is_verified=user.is_verified,
+            created_at=user.created_at.isoformat() if user.created_at else None,
+        )
 
     # =========================================================================
     # Profile Management
     # =========================================================================
 
-    async def update_profile(self, user_id: int, data: UserUpdate) -> "User":
+    async def update_profile(self, user_id: int, data: UserUpdate) -> User:
         """
-        Update user profile.
-
-        Args:
-            user_id: User to update
-            data: Profile fields to update
-
-        Returns:
-            Updated user
+        Update user profile fields.
 
         Raises:
-            UserNotFoundError: If user not found
-            UsernameConflictError: If username taken
+            UserNotFoundError: User does not exist.
+            UsernameConflictError: Username already taken.
         """
         current_user = await self._repo.get_by_id(user_id)
         old_username = current_user.username if current_user else None
 
-        await self._validate_username_available(user_id, data.username)
+        await self._ensure_username_available(user_id, data.username)
 
         user = await self._repo.update(user_id, **data.model_dump(exclude_unset=True))
         if not user:
             raise UserNotFoundError()
 
-        await self._invalidate_user_cache(user_id, old_username, data.username)
-
+        await self._invalidate_user_caches(user_id, old_username, data.username)
         logger.info("Profile updated: user_id=%d", user_id)
         return user
 
-    async def _validate_username_available(
-        self,
-        user_id: int,
-        new_username: str | None,
+    async def _ensure_username_available(
+        self, user_id: int, new_username: str | None
     ) -> None:
         """Validate username is available for this user."""
         if not new_username:
             return
-
         existing = await self._repo.get_by_username(new_username)
         if existing and existing.id != user_id:
             raise UsernameConflictError()
 
-    async def _invalidate_user_cache(
+    async def _invalidate_user_caches(
         self,
         user_id: int,
         old_username: str | None,
         new_username: str | None,
     ) -> None:
-        """Invalidate user cache entries."""
+        """Invalidate all cache entries for user."""
         if not self._invalidator:
             return
-
         await self._invalidator.invalidate_user(user_id, old_username)
         if new_username and new_username != old_username:
             await self._invalidator.invalidate_user(user_id, new_username)
 
     async def update_password(self, user_id: int, data: UserPasswordUpdate) -> None:
         """
-        Update user password.
-
-        Args:
-            user_id: User to update
-            data: Current and new password
+        Change user password after verifying current password.
 
         Raises:
-            UserNotFoundError: If user not found
-            PasswordMismatchError: If current password wrong
+            UserNotFoundError: User does not exist.
+            PasswordMismatchError: Current password incorrect.
         """
         user = await self._repo.get_by_id(user_id)
         if not user:
@@ -315,52 +293,41 @@ class UserService:
         if not verify_password(data.current_password, user.password_hash):
             raise PasswordMismatchError()
 
-        new_hash = hash_password(data.new_password)
-        await self._repo.update(user_id, password_hash=new_hash)
-
+        await self._repo.update(user_id, password_hash=hash_password(data.new_password))
         logger.info("Password updated: user_id=%d", user_id)
 
     # =========================================================================
-    # Avatar Management (delegated to AvatarService)
+    # Avatar Management
     # =========================================================================
 
-    async def upload_avatar(self, user_id: int, file: "UploadFile") -> str:
+    async def upload_avatar(self, user_id: int, file: UploadFile) -> str:
         """
-        Upload new avatar for user.
-
-        Args:
-            user_id: User uploading avatar
-            file: Uploaded image file
+        Upload new avatar, replacing any existing one.
 
         Returns:
-            URL of uploaded avatar
+            URL of the uploaded avatar.
 
         Raises:
-            UserNotFoundError: If user not found
-            InvalidAvatarTypeError: If file type invalid
-            AvatarTooLargeError: If file too large
+            UserNotFoundError: User does not exist.
+            InvalidAvatarTypeError: Invalid file type.
+            AvatarTooLargeError: File exceeds size limit.
         """
         user = await self.get_user_by_id(user_id)
         avatar_url = await self._avatar.replace(user_id, file, user.avatar_url)
         await self._repo.update(user_id, avatar_url=avatar_url)
-
         logger.info("Avatar uploaded: user_id=%d", user_id)
         return avatar_url
 
     async def delete_avatar(self, user_id: int) -> None:
         """
-        Delete user's avatar.
-
-        Args:
-            user_id: User whose avatar to delete
+        Remove user's avatar, reverting to default.
 
         Raises:
-            UserNotFoundError: If user not found
+            UserNotFoundError: User does not exist.
         """
         user = await self.get_user_by_id(user_id)
         await self._avatar.delete_for_user(user)
         await self._repo.update(user_id, avatar_url=None)
-
         logger.info("Avatar deleted: user_id=%d", user_id)
 
     # =========================================================================
@@ -369,250 +336,182 @@ class UserService:
 
     async def follow_user(self, follower_id: int, followed_id: int) -> bool:
         """
-        Follow another user.
-
-        Args:
-            follower_id: User who is following
-            followed_id: User to follow
+        Create follow relationship.
 
         Returns:
-            True if follow created, False if already following
+            True if follow created, False if already following.
 
         Raises:
-            CannotFollowSelfError: If attempting self-follow
-            UserNotFoundError: If followed user not found
+            CannotFollowSelfError: Attempted self-follow.
+            UserNotFoundError: Target user does not exist.
         """
-        self._validate_not_self_follow(follower_id, followed_id)
-        await self._ensure_user_exists(followed_id)
+        self._assert_not_self_follow(follower_id, followed_id)
+        await self._assert_user_exists(followed_id)
 
-        success = await self._repo.follow(follower_id, followed_id)
+        if not await self._repo.follow(follower_id, followed_id):
+            return False
 
-        if success:
-            logger.info("Follow: %d → %d", follower_id, followed_id)
-            await self._on_follow_success(follower_id, followed_id)
-
-        return success
-
-    async def _on_follow_success(self, follower_id: int, followed_id: int) -> None:
-        """Handle successful follow event."""
-        if self._invalidator:
-            await self._invalidator.on_follow(follower_id, followed_id)
-        await self._send_follow_notification(follower_id, followed_id)
+        logger.info("Follow created: %d → %d", follower_id, followed_id)
+        await self._handle_follow_created(follower_id, followed_id)
+        return True
 
     async def unfollow_user(self, follower_id: int, followed_id: int) -> bool:
         """
-        Unfollow a user.
-
-        Args:
-            follower_id: User who is unfollowing
-            followed_id: User to unfollow
+        Remove follow relationship.
 
         Returns:
-            True if unfollowed, False if wasn't following
+            True if unfollowed, False if wasn't following.
         """
-        success = await self._repo.unfollow(follower_id, followed_id)
+        if not await self._repo.unfollow(follower_id, followed_id):
+            return False
 
-        if success:
-            logger.info("Unfollow: %d → %d", follower_id, followed_id)
-            if self._invalidator:
-                await self._invalidator.on_unfollow(follower_id, followed_id)
-
-        return success
+        logger.info("Follow removed: %d → %d", follower_id, followed_id)
+        if self._invalidator:
+            await self._invalidator.on_unfollow(follower_id, followed_id)
+        return True
 
     async def is_following(self, follower_id: int, followed_id: int) -> bool:
-        """Check if user is following another."""
+        """Check if follower_id follows followed_id."""
         return await self._repo.is_following(follower_id, followed_id)
 
     @staticmethod
-    def _validate_not_self_follow(follower_id: int, followed_id: int) -> None:
-        """Raise if attempting self-follow."""
+    def _assert_not_self_follow(follower_id: int, followed_id: int) -> None:
+        """Guard against self-follow attempts."""
         if follower_id == followed_id:
             raise CannotFollowSelfError()
 
-    async def _ensure_user_exists(self, user_id: int) -> None:
-        """Raise if user doesn't exist."""
-        user = await self._repo.get_by_id(user_id)
-        if not user:
+    async def _assert_user_exists(self, user_id: int) -> None:
+        """Guard against operations on non-existent users."""
+        if not await self._repo.get_by_id(user_id):
             raise UserNotFoundError()
 
-    async def _send_follow_notification(
-        self,
-        follower_id: int,
-        followed_id: int,
+    async def _handle_follow_created(
+        self, follower_id: int, followed_id: int
+    ) -> None:
+        """Process side effects of new follow relationship."""
+        if self._invalidator:
+            await self._invalidator.on_follow(follower_id, followed_id)
+        await self._notify_new_follower(follower_id, followed_id)
+
+    async def _notify_new_follower(
+        self, follower_id: int, followed_id: int
     ) -> None:
         """Send follow notification if service available."""
         if not self._notifications:
             return
-
         follower = await self._repo.get_by_id(follower_id)
-        if not follower:
-            return
-
-        await self._notifications.notify_new_follower(
-            user_id=followed_id,
-            follower_id=follower_id,
-            follower_username=follower.username,
-        )
+        if follower:
+            await self._notifications.notify_new_follower(
+                user_id=followed_id,
+                follower_id=follower_id,
+                follower_username=follower.username,
+            )
 
     # =========================================================================
-    # Follower/Following Counts (with caching)
+    # Counts
     # =========================================================================
 
     async def get_followers_count(self, user_id: int) -> int:
-        """Get follower count with cache support."""
-        return await self._get_cached_count(
-            cache_key=CacheKeys.user_followers_count(user_id),
-            user_id=user_id,
-            count_attr="followers_count",
-        )
+        """Get user's follower count (cached)."""
+        return await self._get_count(user_id, _CountType.FOLLOWERS)
 
     async def get_following_count(self, user_id: int) -> int:
-        """Get following count with cache support."""
-        return await self._get_cached_count(
-            cache_key=CacheKeys.user_following_count(user_id),
-            user_id=user_id,
-            count_attr="following_count",
-        )
+        """Get user's following count (cached)."""
+        return await self._get_count(user_id, _CountType.FOLLOWING)
 
-    async def _get_cached_count(
-        self,
-        cache_key: str,
-        user_id: int,
-        count_attr: str,
-    ) -> int:
+    async def _get_count(self, user_id: int, count_type: _CountType) -> int:
         """
-        Get count with cache-aside pattern.
+        Retrieve count with cache-aside pattern.
 
-        Checks cache first, falls back to database, warms cache on miss.
+        Falls back to database on cache miss and warms cache.
         """
-        # Try cache
+        cache_key = self._count_cache_key(user_id, count_type)
+
         if self._cache:
             cached = await self._cache.get_counter(cache_key)
             if cached is not None:
                 return cached
 
-        # Query database
         user = await self._repo.get_by_id(user_id)
-        count = getattr(user, count_attr, 0) if user else 0
+        count = getattr(user, count_type.value, 0) if user else 0
 
-        # Warm cache
         if self._cache and user:
-            await self._cache.set_counter(cache_key, count, USER_COUNTS_TTL)
+            await self._cache.set_counter(cache_key, count, COUNTS_CACHE_TTL)
 
         return count
+
+    @staticmethod
+    def _count_cache_key(user_id: int, count_type: _CountType) -> str:
+        """Build cache key for count type."""
+        if count_type == _CountType.FOLLOWERS:
+            return CacheKeys.user_followers_count(user_id)
+        return CacheKeys.user_following_count(user_id)
 
     # =========================================================================
     # Follower/Following Lists
     # =========================================================================
 
     async def get_followers(
-        self,
-        user_id: int,
-        *,
-        page: int = 1,
-        per_page: int = 20,
-    ) -> PaginatedResult["User"]:
+        self, user_id: int, *, page: int = 1, per_page: int = 20
+    ) -> PaginatedResult[User]:
         """Get paginated list of user's followers."""
-        return await self._paginated_query(
-            lambda skip, limit: self._repo.get_followers_paginated(
-                user_id, skip=skip, limit=limit
-            ),
-            page=page,
-            per_page=per_page,
+        skip = calculate_skip(page, per_page)
+        users, total = await self._repo.get_followers_paginated(
+            user_id, skip=skip, limit=per_page
         )
+        return PaginatedResult.create(list(users), total, page, per_page)
 
     async def get_following(
-        self,
-        user_id: int,
-        *,
-        page: int = 1,
-        per_page: int = 20,
-    ) -> PaginatedResult["User"]:
+        self, user_id: int, *, page: int = 1, per_page: int = 20
+    ) -> PaginatedResult[User]:
         """Get paginated list of users being followed."""
-        return await self._paginated_query(
-            lambda skip, limit: self._repo.get_following_paginated(
-                user_id, skip=skip, limit=limit
-            ),
-            page=page,
-            per_page=per_page,
+        skip = calculate_skip(page, per_page)
+        users, total = await self._repo.get_following_paginated(
+            user_id, skip=skip, limit=per_page
         )
+        return PaginatedResult.create(list(users), total, page, per_page)
 
     # =========================================================================
     # User Discovery
     # =========================================================================
 
     async def search_users(
-        self,
-        query: str,
-        *,
-        page: int = 1,
-        per_page: int = 20,
-    ) -> PaginatedResult["User"]:
+        self, query: str, *, page: int = 1, per_page: int = 20
+    ) -> PaginatedResult[User]:
         """Search users by username or display name."""
-        return await self._paginated_query(
-            lambda skip, limit: self._repo.search_users(query, skip=skip, limit=limit),
-            page=page,
-            per_page=per_page,
-        )
+        skip = calculate_skip(page, per_page)
+        users, total = await self._repo.search_users(query, skip=skip, limit=per_page)
+        return PaginatedResult.create(list(users), total, page, per_page)
 
-    async def get_suggested_users(
-        self,
-        user_id: int,
-        *,
-        limit: int = 10,
-    ) -> list["User"]:
+    async def get_suggested_users(self, user_id: int, *, limit: int = 10) -> list[User]:
         """
         Get suggested users to follow.
 
-        Returns popular users not already followed.
+        Returns popular users not already followed by this user.
         """
         following_ids = await self._repo.get_following_ids(user_id)
         exclude_ids = {user_id, *following_ids}
-
         suggestions = await self._repo.get_popular_users(
-            exclude_ids=exclude_ids,
-            limit=limit,
+            exclude_ids=exclude_ids, limit=limit
         )
-
         return list(suggestions)
-
-    # =========================================================================
-    # Pagination Helper
-    # =========================================================================
-
-    @staticmethod
-    async def _paginated_query(
-        query_fn,
-        page: int,
-        per_page: int,
-    ) -> PaginatedResult:
-        """Execute paginated query and wrap results."""
-        skip = calculate_skip(page, per_page)
-        items, total = await query_fn(skip, per_page)
-
-        return PaginatedResult.create(
-            items=list(items),
-            total=total,
-            page=page,
-            per_page=per_page,
-        )
 
 
 # =============================================================================
 # Backward Compatibility Exports
 # =============================================================================
+# Re-exported for existing code that imports from this module.
+# New code should import directly from the canonical locations.
 
-# Re-export exceptions for existing imports
-from app.services.exceptions import (  # noqa: E402, F401
-    CannotFollowSelfError,
-    InvalidAvatarError,
-    PasswordMismatchError,
-    UserNotFoundError,
-    UsernameConflictError,
-)
-
-# Re-export storage for existing imports
-from app.services.storage import FileStorage, LocalFileStorage  # noqa: E402, F401
-
-# Re-export AvatarConfig for existing imports (now in avatar_service)
 from app.services.avatar_service import AvatarConfig  # noqa: E402, F401
+from app.services.exceptions import (  # noqa: E402, F401
+    CannotFollowSelfError as CannotFollowSelfError,
+    InvalidAvatarError as InvalidAvatarError,
+    PasswordMismatchError as PasswordMismatchError,
+    UserNotFoundError as UserNotFoundError,
+    UsernameConflictError as UsernameConflictError,
+)
+from app.services.storage import (  # noqa: E402, F401
+    FileStorage as FileStorage,
+    LocalFileStorage as LocalFileStorage,
+)

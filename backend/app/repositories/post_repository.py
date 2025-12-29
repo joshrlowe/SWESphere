@@ -6,12 +6,14 @@ Handles all database operations for Post entities including:
 - Feed generation (home, explore)
 - Like/unlike operations
 - Post search
+- Optimized batch operations
 """
 
 import logging
+from datetime import datetime, timedelta, timezone
 from typing import Sequence
 
-from sqlalchemy import case, delete, func, insert, or_, select
+from sqlalchemy import case, delete, func, insert, literal, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -435,6 +437,221 @@ class PostRepository(BaseRepository[Post]):
         )
 
         return result.scalars().all(), total
+
+    # =========================================================================
+    # Optimized Feed Methods (N+1 query elimination)
+    # =========================================================================
+
+    async def get_home_feed_optimized(
+        self,
+        following_ids: list[int],
+        *,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> tuple[Sequence[Post], int]:
+        """
+        Optimized home feed query with eager loading.
+
+        Uses single query with selectinload for author.
+        Uses denormalized counts instead of querying likes table.
+
+        Args:
+            following_ids: List of user IDs being followed (include own ID for own posts)
+            skip: Pagination offset
+            limit: Maximum results
+
+        Returns:
+            Tuple of (posts, total_count)
+        """
+        logger.debug(f"Generating optimized home feed for {len(following_ids)} following")
+
+        if not following_ids:
+            return [], 0
+
+        # Base condition - posts from followed users
+        condition = Post.user_id.in_(following_ids)
+
+        # Get total count in single query
+        count_result = await self.db.execute(
+            select(func.count())
+            .select_from(Post)
+            .where(condition)
+            .where(Post.deleted_at.is_(None))
+        )
+        total = count_result.scalar() or 0
+
+        # Single optimized query with eager loading
+        # Uses covering index: idx_posts_user_timestamp
+        result = await self.db.execute(
+            select(Post)
+            .where(condition)
+            .where(Post.deleted_at.is_(None))
+            .options(selectinload(Post.author))
+            .order_by(Post.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+
+        return result.scalars().all(), total
+
+    async def get_posts_with_like_status(
+        self,
+        post_ids: list[int],
+        user_id: int,
+    ) -> dict[int, bool]:
+        """
+        Batch query to check like status for multiple posts.
+
+        Eliminates N+1 queries when checking likes for a feed of posts.
+
+        Args:
+            post_ids: List of post IDs to check
+            user_id: User whose like status to check
+
+        Returns:
+            Dictionary mapping post_id -> is_liked (True/False)
+        """
+        if not post_ids:
+            return {}
+
+        logger.debug(f"Batch checking likes for {len(post_ids)} posts, user_id={user_id}")
+
+        # Single query to get all liked post IDs
+        result = await self.db.execute(
+            select(post_likes.c.post_id).where(
+                post_likes.c.user_id == user_id,
+                post_likes.c.post_id.in_(post_ids),
+            )
+        )
+        liked_post_ids = {row[0] for row in result.fetchall()}
+
+        # Return dict with True for liked, False for not liked
+        return {post_id: post_id in liked_post_ids for post_id in post_ids}
+
+    async def get_explore_feed_optimized(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 20,
+        hours: int = 24,
+    ) -> tuple[Sequence[Post], int]:
+        """
+        Optimized explore feed with database-side scoring.
+
+        Scoring formula: likes + (comments * 2) + recency_bonus
+        Recency bonus: posts from last `hours` get extra points
+
+        Uses covering index: idx_posts_timestamp_engagement
+
+        Args:
+            skip: Pagination offset
+            limit: Maximum results
+            hours: Hours to consider for recency bonus (default 24)
+
+        Returns:
+            Tuple of (posts, total_count)
+        """
+        logger.debug(f"Generating optimized explore feed with {hours}h recency window")
+
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+
+        # Engagement score calculated in database
+        # likes_count + (comments_count * 2) + recency_bonus
+        recency_bonus = case(
+            (Post.created_at >= cutoff_time, literal(10)),
+            else_=literal(0),
+        )
+        engagement_score = (
+            Post.likes_count + (Post.comments_count * 2) + recency_bonus
+        )
+
+        # Get total count for non-deleted posts
+        count_result = await self.db.execute(
+            select(func.count())
+            .select_from(Post)
+            .where(Post.deleted_at.is_(None))
+        )
+        total = count_result.scalar() or 0
+
+        # Get posts ordered by engagement score
+        result = await self.db.execute(
+            select(Post)
+            .where(Post.deleted_at.is_(None))
+            .options(selectinload(Post.author))
+            .order_by(engagement_score.desc(), Post.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+
+        return result.scalars().all(), total
+
+    async def get_trending_posts(
+        self,
+        *,
+        hours: int = 6,
+        limit: int = 10,
+    ) -> Sequence[Post]:
+        """
+        Get trending posts based on recent engagement velocity.
+
+        Calculates engagement rate (likes + comments) within time window.
+
+        Args:
+            hours: Time window for trending calculation
+            limit: Maximum results
+
+        Returns:
+            List of trending posts
+        """
+        logger.debug(f"Fetching trending posts from last {hours} hours")
+
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+
+        # Posts created within time window, ordered by engagement
+        result = await self.db.execute(
+            select(Post)
+            .where(Post.deleted_at.is_(None))
+            .where(Post.created_at >= cutoff_time)
+            .options(selectinload(Post.author))
+            .order_by(
+                (Post.likes_count + Post.comments_count * 2).desc(),
+                Post.created_at.desc(),
+            )
+            .limit(limit)
+        )
+
+        return result.scalars().all()
+
+    async def get_posts_by_ids_ordered(
+        self,
+        post_ids: list[int],
+    ) -> Sequence[Post]:
+        """
+        Get posts by IDs maintaining the input order.
+
+        Useful for displaying cached feed results.
+
+        Args:
+            post_ids: Ordered list of post IDs
+
+        Returns:
+            Posts in same order as input IDs
+        """
+        if not post_ids:
+            return []
+
+        result = await self.db.execute(
+            select(Post)
+            .where(Post.id.in_(post_ids))
+            .where(Post.deleted_at.is_(None))
+            .options(selectinload(Post.author))
+        )
+
+        posts = result.scalars().all()
+
+        # Reorder to match input order
+        post_map = {post.id: post for post in posts}
+        return [post_map[pid] for pid in post_ids if pid in post_map]
 
     # =========================================================================
     # Legacy Aliases (for backwards compatibility)

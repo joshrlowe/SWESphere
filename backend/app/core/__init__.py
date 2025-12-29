@@ -7,8 +7,20 @@ Exports:
 - Redis key management
 - Pagination utilities
 - WebSocket connection management
+- Database monitoring
 """
 
+from app.core.db_monitoring import (
+    get_query_stats,
+    log_query_stats,
+    query_stats,
+    query_timer,
+    reset_query_stats,
+    setup_pool_monitoring,
+    setup_query_logging,
+    timed_query,
+    SLOW_QUERY_THRESHOLD_MS,
+)
 from app.core.pagination import (
     calculate_skip,
     calculate_pages,
@@ -40,6 +52,16 @@ from app.core.websocket import (
 )
 
 __all__ = [
+    # Database monitoring
+    "setup_query_logging",
+    "setup_pool_monitoring",
+    "query_timer",
+    "timed_query",
+    "query_stats",
+    "get_query_stats",
+    "log_query_stats",
+    "reset_query_stats",
+    "SLOW_QUERY_THRESHOLD_MS",
     # Pagination
     "calculate_skip",
     "calculate_pages",
