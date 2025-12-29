@@ -16,6 +16,7 @@ class RedisKeys:
     Usage:
         keys = RedisKeys()
         key = keys.refresh_token(user_id=123)  # "refresh_token:123"
+        key = keys.user(user_id=123)  # "user:123"
     """
 
     # Key prefixes
@@ -29,6 +30,14 @@ class RedisKeys:
     CACHE_PREFIX = "cache"
     HOME_FEED_PREFIX = "home_feed"
     EXPLORE_FEED_PREFIX = "explore_feed"
+
+    # Entity prefixes
+    USER_PREFIX = "user"
+    USER_BY_USERNAME_PREFIX = "user_by_username"
+    POST_PREFIX = "post"
+    POST_LIKES_PREFIX = "post_likes"
+    USER_FOLLOWERS_PREFIX = "user_followers"
+    USER_FOLLOWING_PREFIX = "user_following"
 
     # =========================================================================
     # Authentication Keys
@@ -121,6 +130,169 @@ class RedisKeys:
     def user_sessions_pattern(self, user_id: int) -> str:
         """Pattern for scanning all sessions for a user."""
         return f"session:{user_id}:*"
+
+    # =========================================================================
+    # Entity Cache Keys
+    # =========================================================================
+
+    def user(self, user_id: int) -> str:
+        """Generate key for cached user profile."""
+        return f"{self.USER_PREFIX}:{user_id}"
+
+    def user_pattern(self) -> str:
+        """Pattern for scanning all cached user profiles."""
+        return f"{self.USER_PREFIX}:*"
+
+    def user_by_username(self, username: str) -> str:
+        """Generate key for username-to-user-id mapping."""
+        return f"{self.USER_BY_USERNAME_PREFIX}:{username.lower()}"
+
+    def user_by_username_pattern(self) -> str:
+        """Pattern for scanning all username mappings."""
+        return f"{self.USER_BY_USERNAME_PREFIX}:*"
+
+    def post(self, post_id: int) -> str:
+        """Generate key for cached post."""
+        return f"{self.POST_PREFIX}:{post_id}"
+
+    def post_pattern(self) -> str:
+        """Pattern for scanning all cached posts."""
+        return f"{self.POST_PREFIX}:*"
+
+    # =========================================================================
+    # Counter Keys
+    # =========================================================================
+
+    def post_likes_count(self, post_id: int) -> str:
+        """Generate key for post likes counter."""
+        return f"{self.POST_LIKES_PREFIX}:{post_id}:count"
+
+    def post_likers(self, post_id: int) -> str:
+        """Generate key for set of user IDs who liked a post."""
+        return f"{self.POST_LIKES_PREFIX}:{post_id}:users"
+
+    def user_followers_count(self, user_id: int) -> str:
+        """Generate key for user's followers count."""
+        return f"{self.USER_FOLLOWERS_PREFIX}:{user_id}:count"
+
+    def user_following_count(self, user_id: int) -> str:
+        """Generate key for user's following count."""
+        return f"{self.USER_FOLLOWING_PREFIX}:{user_id}:count"
+
+    def notifications_unread(self, user_id: int) -> str:
+        """Generate key for unread notifications count (alias for notification_count)."""
+        return self.notification_count(user_id)
+
+    # =========================================================================
+    # Token Blacklist
+    # =========================================================================
+
+    def token_blacklist_jti(self, jti: str) -> str:
+        """Generate key for blacklisted token by JTI."""
+        return f"{self.TOKEN_BLACKLIST_PREFIX}:jti:{jti}"
+
+
+# =============================================================================
+# Static Key Builders (for convenience)
+# =============================================================================
+
+
+class CacheKeys:
+    """
+    Static cache key builders for common patterns.
+
+    Provides a simpler interface than RedisKeys for common use cases.
+    All methods are static and can be called without instantiation.
+    """
+
+    @staticmethod
+    def user(user_id: int) -> str:
+        """Generate key for cached user profile."""
+        return f"user:{user_id}"
+
+    @staticmethod
+    def user_by_username(username: str) -> str:
+        """Generate key for username-to-user-id lookup."""
+        return f"user_by_username:{username.lower()}"
+
+    @staticmethod
+    def home_feed(user_id: int) -> str:
+        """Generate key for user's home feed cache."""
+        return f"home_feed:{user_id}"
+
+    @staticmethod
+    def home_feed_page(user_id: int, page: int, per_page: int) -> str:
+        """Generate key for specific page of home feed."""
+        return f"home_feed:{user_id}:{page}:{per_page}"
+
+    @staticmethod
+    def explore_feed() -> str:
+        """Generate key for explore feed cache."""
+        return "explore_feed"
+
+    @staticmethod
+    def explore_feed_page(page: int, per_page: int) -> str:
+        """Generate key for specific page of explore feed."""
+        return f"explore_feed:{page}:{per_page}"
+
+    @staticmethod
+    def post(post_id: int) -> str:
+        """Generate key for cached post."""
+        return f"post:{post_id}"
+
+    @staticmethod
+    def post_likes_count(post_id: int) -> str:
+        """Generate key for post likes counter."""
+        return f"post_likes:{post_id}:count"
+
+    @staticmethod
+    def post_likers(post_id: int) -> str:
+        """Generate key for set of user IDs who liked a post."""
+        return f"post_likes:{post_id}:users"
+
+    @staticmethod
+    def notifications_unread(user_id: int) -> str:
+        """Generate key for unread notifications count."""
+        return f"notification_count:{user_id}"
+
+    @staticmethod
+    def user_followers_count(user_id: int) -> str:
+        """Generate key for user's followers count."""
+        return f"user_followers:{user_id}:count"
+
+    @staticmethod
+    def user_following_count(user_id: int) -> str:
+        """Generate key for user's following count."""
+        return f"user_following:{user_id}:count"
+
+    @staticmethod
+    def token_blacklist(jti: str) -> str:
+        """Generate key for blacklisted token by JTI."""
+        return f"token_blacklist:jti:{jti}"
+
+    # =========================================================================
+    # Pattern Builders (for invalidation)
+    # =========================================================================
+
+    @staticmethod
+    def user_pattern(user_id: int) -> str:
+        """Pattern for all user-related cache keys."""
+        return f"user:{user_id}*"
+
+    @staticmethod
+    def home_feed_pattern(user_id: int) -> str:
+        """Pattern for all home feed pages for a user."""
+        return f"home_feed:{user_id}:*"
+
+    @staticmethod
+    def explore_feed_pattern() -> str:
+        """Pattern for all explore feed pages."""
+        return "explore_feed:*"
+
+    @staticmethod
+    def post_pattern(post_id: int) -> str:
+        """Pattern for all post-related cache keys."""
+        return f"post:{post_id}*"
 
 
 # Singleton instance for convenience

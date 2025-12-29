@@ -6,6 +6,7 @@ Provides FastAPI dependencies for:
 - Redis client
 - Repositories
 - Services
+- Cache layer
 
 All dependencies are designed for async operation and proper resource management.
 """
@@ -21,6 +22,8 @@ from app.db.session import get_async_session
 from app.repositories.post_repository import PostRepository
 from app.repositories.user_repository import UserRepository
 from app.services.auth_service import AuthService
+from app.services.cache_invalidation import CacheInvalidator
+from app.services.cache_service import CacheService
 from app.services.notification_service import NotificationService
 from app.services.post_service import PostService
 from app.services.user_service import UserService
@@ -90,6 +93,25 @@ RedisClient = Annotated[Redis, Depends(get_redis)]
 
 
 # =============================================================================
+# Cache Dependencies
+# =============================================================================
+
+
+def get_cache_service(redis: RedisClient) -> CacheService:
+    """Provide CacheService instance."""
+    return CacheService(redis)
+
+
+def get_cache_invalidator(cache: "CacheSvc") -> CacheInvalidator:
+    """Provide CacheInvalidator instance."""
+    return CacheInvalidator(cache)
+
+
+CacheSvc = Annotated[CacheService, Depends(get_cache_service)]
+CacheInv = Annotated[CacheInvalidator, Depends(get_cache_invalidator)]
+
+
+# =============================================================================
 # Repository Dependencies
 # =============================================================================
 
@@ -118,22 +140,83 @@ def get_auth_service(user_repo: UserRepo, redis: RedisClient) -> AuthService:
     return AuthService(user_repo, redis)
 
 
-def get_user_service(user_repo: UserRepo) -> UserService:
-    """Provide UserService instance."""
-    return UserService(user_repo)
-
-
-def get_post_service(post_repo: PostRepo, user_repo: UserRepo) -> PostService:
-    """Provide PostService instance."""
-    return PostService(post_repo, user_repo)
-
-
 def get_notification_service(db: DBSession, redis: RedisClient) -> NotificationService:
     """Provide NotificationService instance."""
     return NotificationService(db, redis)
 
 
+def get_user_service(
+    user_repo: UserRepo,
+    cache: CacheSvc,
+    cache_invalidator: CacheInv,
+) -> UserService:
+    """Provide UserService instance with caching."""
+    return UserService(
+        user_repo=user_repo,
+        notification_service=None,  # Injected separately when needed
+        cache=cache,
+        cache_invalidator=cache_invalidator,
+    )
+
+
+def get_user_service_with_notifications(
+    user_repo: UserRepo,
+    cache: CacheSvc,
+    cache_invalidator: CacheInv,
+    db: DBSession,
+    redis: RedisClient,
+) -> UserService:
+    """Provide UserService with notification support."""
+    notification_service = NotificationService(db, redis)
+    return UserService(
+        user_repo=user_repo,
+        notification_service=notification_service,
+        cache=cache,
+        cache_invalidator=cache_invalidator,
+    )
+
+
+def get_post_service(
+    post_repo: PostRepo,
+    user_repo: UserRepo,
+    redis: RedisClient,
+    cache: CacheSvc,
+    cache_invalidator: CacheInv,
+) -> PostService:
+    """Provide PostService instance with caching."""
+    return PostService(
+        post_repo=post_repo,
+        user_repo=user_repo,
+        redis=redis,
+        notification_service=None,  # Injected separately when needed
+        cache=cache,
+        cache_invalidator=cache_invalidator,
+    )
+
+
+def get_post_service_with_notifications(
+    post_repo: PostRepo,
+    user_repo: UserRepo,
+    redis: RedisClient,
+    cache: CacheSvc,
+    cache_invalidator: CacheInv,
+    db: DBSession,
+) -> PostService:
+    """Provide PostService with notification support."""
+    notification_service = NotificationService(db, redis)
+    return PostService(
+        post_repo=post_repo,
+        user_repo=user_repo,
+        redis=redis,
+        notification_service=notification_service,
+        cache=cache,
+        cache_invalidator=cache_invalidator,
+    )
+
+
 AuthSvc = Annotated[AuthService, Depends(get_auth_service)]
-UserSvc = Annotated[UserService, Depends(get_user_service)]
-PostSvc = Annotated[PostService, Depends(get_post_service)]
 NotificationSvc = Annotated[NotificationService, Depends(get_notification_service)]
+UserSvc = Annotated[UserService, Depends(get_user_service)]
+UserSvcWithNotifications = Annotated[UserService, Depends(get_user_service_with_notifications)]
+PostSvc = Annotated[PostService, Depends(get_post_service)]
+PostSvcWithNotifications = Annotated[PostService, Depends(get_post_service_with_notifications)]

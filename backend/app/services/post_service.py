@@ -3,13 +3,19 @@ Post service.
 
 Handles post creation, retrieval, updates, likes, feed generation,
 and mention processing.
+
+Implements caching strategies:
+- Cache-aside for feed queries
+- Write-through for like counters
+- Invalidation on post/follow changes
 """
 
 import html
+import json
 import logging
 import re
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException, status
 from redis.asyncio import Redis
@@ -17,7 +23,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.pagination import PaginatedResult, calculate_skip
-from app.core.redis_keys import redis_keys
+from app.core.redis_keys import CacheKeys, redis_keys
 from app.models.comment import Comment
 from app.models.post import Post
 from app.repositories.post_repository import PostRepository
@@ -25,6 +31,8 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.post import PostCreate, PostUpdate
 
 if TYPE_CHECKING:
+    from app.services.cache_invalidation import CacheInvalidator
+    from app.services.cache_service import CacheService
     from app.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
@@ -85,10 +93,15 @@ class PostService:
 
     Handles:
     - Post CRUD operations
-    - Feed generation (home and explore)
-    - Like/unlike operations
+    - Feed generation (home and explore) with caching
+    - Like/unlike operations with write-through counters
     - Comment operations
     - Mention detection and notifications
+
+    Caching Strategy:
+    - Feeds: Cache-aside with 60s TTL (home) / 5min TTL (explore)
+    - Like counts: Write-through to Redis counters
+    - Like status: Cached in Redis sets for O(1) lookup
     """
 
     def __init__(
@@ -97,6 +110,8 @@ class PostService:
         user_repo: UserRepository,
         redis: Redis | None = None,
         notification_service: "NotificationService | None" = None,
+        cache: "CacheService | None" = None,
+        cache_invalidator: "CacheInvalidator | None" = None,
     ) -> None:
         """
         Initialize post service.
@@ -104,13 +119,17 @@ class PostService:
         Args:
             post_repo: Post repository for data access
             user_repo: User repository for mention lookups
-            redis: Optional Redis client for caching
+            redis: Optional Redis client for pub/sub
             notification_service: Optional notification service for mentions/likes
+            cache: Optional cache service for caching operations
+            cache_invalidator: Optional cache invalidator for cache management
         """
         self.post_repo = post_repo
         self.user_repo = user_repo
         self.redis = redis
         self.notification_service = notification_service
+        self._cache = cache
+        self._cache_invalidator = cache_invalidator
 
     # =========================================================================
     # Database Session Access
@@ -154,7 +173,13 @@ class PostService:
         )
 
         await self._process_mentions(post, user_id)
-        await self._invalidate_feed_caches(user_id)
+
+        # Invalidate feed caches (author + followers)
+        if self._cache_invalidator:
+            follower_ids = await self.user_repo.get_follower_ids(user_id)
+            await self._cache_invalidator.on_new_post(post, user_id, follower_ids)
+        else:
+            await self._invalidate_feed_caches(user_id)
 
         logger.info(f"Post created: {post.id} by user {user_id}")
         return post
@@ -209,7 +234,14 @@ class PostService:
 
         success = await self.post_repo.delete(post_id)
         if success:
-            await self._invalidate_feed_caches(user_id)
+            # Invalidate caches
+            if self._cache_invalidator:
+                follower_ids = await self.user_repo.get_follower_ids(user_id)
+                await self._cache_invalidator.on_post_delete(
+                    post_id, user_id, follower_ids
+                )
+            else:
+                await self._invalidate_feed_caches(user_id)
             logger.info(f"Post deleted: {post_id} by user {user_id}")
 
         return success
@@ -229,15 +261,24 @@ class PostService:
         Get personalized home feed for a user.
 
         Shows posts from followed users and the user's own posts.
-        Results are cached for performance.
+        Results are cached for performance using cache-aside pattern.
+
+        Caching Strategy:
+        1. Check cache first (60s TTL)
+        2. On miss, query database
+        3. Cache result before returning
         """
+        cache_key = CacheKeys.home_feed_page(user_id, page, per_page)
+
+        # Try cache first (cache-aside pattern)
+        if self._cache:
+            cached_data = await self._cache.get_json(cache_key)
+            if cached_data is not None:
+                logger.debug(f"Cache HIT for home feed: user={user_id}, page={page}")
+                return self._deserialize_feed_result(cached_data)
+
+        # Cache miss - query database
         skip = calculate_skip(page, per_page)
-        cache_key = redis_keys.home_feed(user_id, page, per_page)
-
-        cached = await self._get_cached_feed(cache_key)
-        if cached is not None:
-            return cached
-
         following_ids = await self.user_repo.get_following_ids(user_id)
         posts, total = await self.post_repo.get_home_feed(
             user_id,
@@ -247,7 +288,12 @@ class PostService:
         )
 
         result = PaginatedResult.create(list(posts), total, page, per_page)
-        await self._cache_feed(cache_key, result, FEED_CACHE_TTL)
+
+        # Cache the result
+        if self._cache:
+            serialized = self._serialize_feed_result(result)
+            await self._cache.set_json(cache_key, serialized, FEED_CACHE_TTL)
+            logger.debug(f"Cache SET for home feed: user={user_id}, page={page}")
 
         return result
 
@@ -261,18 +307,27 @@ class PostService:
         Get explore feed with trending/recent posts.
 
         Shows all public posts, ordered by recency/popularity.
-        Results are cached for performance.
+        Results are cached for performance (5 min TTL).
         """
+        cache_key = CacheKeys.explore_feed_page(page, per_page)
+
+        # Try cache first
+        if self._cache:
+            cached_data = await self._cache.get_json(cache_key)
+            if cached_data is not None:
+                logger.debug(f"Cache HIT for explore feed: page={page}")
+                return self._deserialize_feed_result(cached_data)
+
+        # Cache miss - query database
         skip = calculate_skip(page, per_page)
-        cache_key = redis_keys.explore_feed(page, per_page)
-
-        cached = await self._get_cached_feed(cache_key)
-        if cached is not None:
-            return cached
-
         posts, total = await self.post_repo.get_explore_feed(skip=skip, limit=per_page)
         result = PaginatedResult.create(list(posts), total, page, per_page)
-        await self._cache_feed(cache_key, result, EXPLORE_CACHE_TTL)
+
+        # Cache the result
+        if self._cache:
+            serialized = self._serialize_feed_result(result)
+            await self._cache.set_json(cache_key, serialized, EXPLORE_CACHE_TTL)
+            logger.debug(f"Cache SET for explore feed: page={page}")
 
         return result
 
@@ -338,6 +393,8 @@ class PostService:
         """
         Like a post.
 
+        Uses write-through pattern: updates both DB and cache atomically.
+
         Returns:
             True if like was added (False if already liked)
 
@@ -348,6 +405,10 @@ class PostService:
         success = await self.post_repo.like_post(user_id, post_id)
 
         if success:
+            # Write-through: update cache counter
+            if self._cache_invalidator:
+                await self._cache_invalidator.on_like(user_id, post_id)
+
             await self._send_like_notification(post, user_id)
             logger.debug(f"User {user_id} liked post {post_id}")
 
@@ -357,16 +418,37 @@ class PostService:
         """
         Remove like from a post.
 
+        Uses write-through pattern for cache consistency.
+
         Returns:
             True if like was removed (False if wasn't liked)
         """
         success = await self.post_repo.unlike_post(user_id, post_id)
         if success:
+            # Write-through: update cache counter
+            if self._cache_invalidator:
+                await self._cache_invalidator.on_unlike(user_id, post_id)
+
             logger.debug(f"User {user_id} unliked post {post_id}")
         return success
 
     async def is_liked(self, user_id: int, post_id: int) -> bool:
-        """Check if a user has liked a specific post."""
+        """
+        Check if a user has liked a specific post.
+
+        Checks cache first for O(1) lookup.
+        """
+        # Try cache first
+        if self._cache:
+            is_cached = await self._cache.is_in_set(
+                CacheKeys.post_likers(post_id),
+                str(user_id),
+            )
+            # Only trust cache hit if the set exists
+            set_exists = await self._cache.exists(CacheKeys.post_likers(post_id))
+            if set_exists:
+                return is_cached
+
         return await self.post_repo.is_liked_by(post_id, user_id)
 
     async def get_liked_status(
@@ -377,11 +459,68 @@ class PostService:
         """
         Check like status for multiple posts at once.
 
+        Uses cache when available for better performance.
+
         Returns:
             Dict mapping post_id -> is_liked
         """
-        liked_ids = await self.post_repo.get_liked_post_ids(user_id, post_ids)
-        return {pid: pid in liked_ids for pid in post_ids}
+        result: dict[int, bool] = {}
+        uncached_ids: list[int] = []
+
+        # Check cache for each post
+        if self._cache:
+            for post_id in post_ids:
+                set_exists = await self._cache.exists(CacheKeys.post_likers(post_id))
+                if set_exists:
+                    is_liked = await self._cache.is_in_set(
+                        CacheKeys.post_likers(post_id),
+                        str(user_id),
+                    )
+                    result[post_id] = is_liked
+                else:
+                    uncached_ids.append(post_id)
+        else:
+            uncached_ids = post_ids
+
+        # Query DB for uncached posts
+        if uncached_ids:
+            liked_ids = await self.post_repo.get_liked_post_ids(user_id, uncached_ids)
+            for post_id in uncached_ids:
+                result[post_id] = post_id in liked_ids
+
+        return result
+
+    async def get_like_count(self, post_id: int) -> int:
+        """
+        Get the like count for a post.
+
+        Checks cache first, falls back to database.
+
+        Args:
+            post_id: Post ID
+
+        Returns:
+            Number of likes
+        """
+        # Try cache first
+        if self._cache:
+            cached_count = await self._cache.get_counter(
+                CacheKeys.post_likes_count(post_id)
+            )
+            if cached_count is not None:
+                return cached_count
+
+        # Query database
+        count = await self.post_repo.get_likes_count(post_id)
+
+        # Warm cache
+        if self._cache:
+            await self._cache.set_counter(
+                CacheKeys.post_likes_count(post_id),
+                count,
+            )
+
+        return count
 
     # =========================================================================
     # Comment Operations
@@ -701,16 +840,79 @@ class PostService:
     # Private: Caching
     # =========================================================================
 
+    def _serialize_feed_result(self, result: PaginatedResult) -> dict[str, Any]:
+        """
+        Serialize a PaginatedResult for caching.
+
+        Converts Post objects to dicts for JSON storage.
+        """
+        return {
+            "items": [self._serialize_post(post) for post in result.items],
+            "total": result.total,
+            "page": result.page,
+            "per_page": result.per_page,
+            "pages": result.pages,
+            "has_next": result.has_next,
+            "has_prev": result.has_prev,
+        }
+
+    def _serialize_post(self, post: Post) -> dict[str, Any]:
+        """Serialize a Post for caching."""
+        return {
+            "id": post.id,
+            "body": post.body,
+            "user_id": post.user_id,
+            "media_url": post.media_url,
+            "media_type": post.media_type,
+            "likes_count": post.likes_count,
+            "comments_count": post.comments_count,
+            "reposts_count": getattr(post, "reposts_count", 0),
+            "reply_to_id": post.reply_to_id,
+            "created_at": post.created_at.isoformat() if post.created_at else None,
+            "updated_at": post.updated_at.isoformat() if post.updated_at else None,
+            # Include author info if loaded
+            "author": self._serialize_author(post.author) if post.author else None,
+        }
+
+    @staticmethod
+    def _serialize_author(author) -> dict[str, Any]:
+        """Serialize author info for caching."""
+        return {
+            "id": author.id,
+            "username": author.username,
+            "display_name": author.display_name,
+            "avatar_url": author.avatar_url,
+        }
+
+    def _deserialize_feed_result(self, data: dict[str, Any]) -> PaginatedResult:
+        """
+        Deserialize a cached feed result.
+
+        Note: Returns raw dicts, not Post objects.
+        For full ORM objects, a cache miss is needed.
+        """
+        from app.core.pagination import PaginatedResult
+
+        return PaginatedResult(
+            items=data.get("items", []),
+            total=data.get("total", 0),
+            page=data.get("page", 1),
+            per_page=data.get("per_page", 20),
+            pages=data.get("pages", 1),
+            has_next=data.get("has_next", False),
+            has_prev=data.get("has_prev", False),
+        )
+
     async def _get_cached_feed(self, key: str) -> PaginatedResult | None:
-        """Get cached feed from Redis."""
+        """Get cached feed from Redis (legacy method)."""
         if not self.redis:
             return None
 
         try:
             data = await self.redis.get(key)
             if data:
-                # Note: Full caching implementation would deserialize here
-                pass
+                parsed = json.loads(data)
+                return self._deserialize_feed_result(parsed)
         except Exception as e:
             logger.warning(f"Cache read error: {e}")
 
@@ -722,18 +924,22 @@ class PostService:
         result: PaginatedResult,
         ttl: int,
     ) -> None:
-        """Cache feed result in Redis."""
+        """Cache feed result in Redis (legacy method)."""
         if not self.redis:
             return
 
         try:
-            # Note: Full implementation would serialize the response
-            await self.redis.setex(key, ttl, "cached")
+            serialized = json.dumps(self._serialize_feed_result(result), default=str)
+            await self.redis.setex(key, ttl, serialized)
         except Exception as e:
             logger.warning(f"Cache write error: {e}")
 
     async def _invalidate_feed_caches(self, user_id: int) -> None:
         """Invalidate feed caches after post creation/deletion."""
+        if self._cache_invalidator:
+            await self._cache_invalidator.invalidate_user_feeds(user_id)
+            return
+
         if not self.redis:
             return
 

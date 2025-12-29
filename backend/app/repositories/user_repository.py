@@ -196,6 +196,23 @@ class UserRepository(BaseRepository[User]):
         )
         return [row[0] for row in result.fetchall()]
 
+    async def get_follower_ids(self, user_id: int) -> list[int]:
+        """
+        Get IDs of all users that follow the specified user.
+
+        Useful for cache invalidation (fanout on write).
+
+        Args:
+            user_id: User whose follower IDs to fetch
+
+        Returns:
+            List of user IDs
+        """
+        result = await self.db.execute(
+            select(followers.c.follower_id).where(followers.c.followed_id == user_id)
+        )
+        return [row[0] for row in result.fetchall()]
+
     async def get_followers_count(self, user_id: int) -> int:
         """Get count of user's followers."""
         result = await self.db.execute(
