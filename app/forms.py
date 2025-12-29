@@ -1,4 +1,5 @@
 """WTForms form definitions for SWESphere."""
+
 import re
 from app import app, db
 from app.models import User
@@ -23,11 +24,15 @@ def validate_password_complexity(form, field):
 
     if config.get("PASSWORD_REQUIRE_UPPERCASE", True):
         if not re.search(r"[A-Z]", password):
-            raise ValidationError(_("Password must contain at least one uppercase letter."))
+            raise ValidationError(
+                _("Password must contain at least one uppercase letter.")
+            )
 
     if config.get("PASSWORD_REQUIRE_LOWERCASE", True):
         if not re.search(r"[a-z]", password):
-            raise ValidationError(_("Password must contain at least one lowercase letter."))
+            raise ValidationError(
+                _("Password must contain at least one lowercase letter.")
+            )
 
     if config.get("PASSWORD_REQUIRE_DIGIT", True):
         if not re.search(r"\d", password):
@@ -35,7 +40,9 @@ def validate_password_complexity(form, field):
 
     if config.get("PASSWORD_REQUIRE_SPECIAL", False):
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            raise ValidationError(_("Password must contain at least one special character."))
+            raise ValidationError(
+                _("Password must contain at least one special character.")
+            )
 
 
 class LoginForm(FlaskForm):
@@ -50,15 +57,21 @@ class LoginForm(FlaskForm):
 class RegistrationForm(FlaskForm):
     """Registration form with password complexity validation."""
 
-    username = StringField(_l("Username"), validators=[
-        DataRequired(),
-        Length(min=3, max=64, message=_l("Username must be between 3 and 64 characters."))
-    ])
+    username = StringField(
+        _l("Username"),
+        validators=[
+            DataRequired(),
+            Length(
+                min=3,
+                max=64,
+                message=_l("Username must be between 3 and 64 characters."),
+            ),
+        ],
+    )
     email = StringField(_l("Email"), validators=[DataRequired(), Email()])
-    password = PasswordField(_l("Password"), validators=[
-        DataRequired(),
-        validate_password_complexity
-    ])
+    password = PasswordField(
+        _l("Password"), validators=[DataRequired(), validate_password_complexity]
+    )
     password2 = PasswordField(
         _l("Repeat Password"), validators=[DataRequired(), EqualTo("password")]
     )
@@ -111,9 +124,12 @@ class EditProfileForm(FlaskForm):
 class AvatarUploadForm(FlaskForm):
     """Avatar upload form."""
 
-    avatar = FileField(_l("Upload Avatar"), validators=[
-        FileAllowed(["jpg", "jpeg", "png", "gif", "webp"], _l("Images only!"))
-    ])
+    avatar = FileField(
+        _l("Upload Avatar"),
+        validators=[
+            FileAllowed(["jpg", "jpeg", "png", "gif", "webp"], _l("Images only!"))
+        ],
+    )
     submit = SubmitField(_l("Upload"))
 
 
@@ -158,10 +174,9 @@ class ResetPasswordRequestForm(FlaskForm):
 class ResetPasswordForm(FlaskForm):
     """Password reset form with complexity validation."""
 
-    password = PasswordField(_l("Password"), validators=[
-        DataRequired(),
-        validate_password_complexity
-    ])
+    password = PasswordField(
+        _l("Password"), validators=[DataRequired(), validate_password_complexity]
+    )
     password2 = PasswordField(
         _l("Repeat Password"), validators=[DataRequired(), EqualTo("password")]
     )
@@ -171,11 +186,12 @@ class ResetPasswordForm(FlaskForm):
 class ChangePasswordForm(FlaskForm):
     """Change password form for authenticated users."""
 
-    current_password = PasswordField(_l("Current Password"), validators=[DataRequired()])
-    new_password = PasswordField(_l("New Password"), validators=[
-        DataRequired(),
-        validate_password_complexity
-    ])
+    current_password = PasswordField(
+        _l("Current Password"), validators=[DataRequired()]
+    )
+    new_password = PasswordField(
+        _l("New Password"), validators=[DataRequired(), validate_password_complexity]
+    )
     new_password2 = PasswordField(
         _l("Repeat New Password"), validators=[DataRequired(), EqualTo("new_password")]
     )

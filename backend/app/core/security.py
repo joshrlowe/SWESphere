@@ -36,10 +36,10 @@ _pwd_context = CryptContext(
 def hash_password(password: str) -> str:
     """
     Hash a password using bcrypt.
-    
+
     Args:
         password: Plain text password
-        
+
     Returns:
         Bcrypt hash string
     """
@@ -49,11 +49,11 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a password against its hash.
-    
+
     Args:
         plain_password: Plain text password to verify
         hashed_password: Stored bcrypt hash
-        
+
     Returns:
         True if password matches
     """
@@ -67,29 +67,29 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def validate_password_strength(password: str) -> tuple[bool, list[str]]:
     """
     Validate password meets security requirements.
-    
+
     Args:
         password: Password to validate
-        
+
     Returns:
         Tuple of (is_valid, error_messages)
     """
     errors: list[str] = []
-    
+
     if len(password) < settings.PASSWORD_MIN_LENGTH:
         errors.append(
             f"Password must be at least {settings.PASSWORD_MIN_LENGTH} characters"
         )
-    
+
     if settings.PASSWORD_REQUIRE_UPPERCASE and not any(c.isupper() for c in password):
         errors.append("Password must contain at least one uppercase letter")
-    
+
     if settings.PASSWORD_REQUIRE_LOWERCASE and not any(c.islower() for c in password):
         errors.append("Password must contain at least one lowercase letter")
-    
+
     if settings.PASSWORD_REQUIRE_DIGIT and not any(c.isdigit() for c in password):
         errors.append("Password must contain at least one digit")
-    
+
     return len(errors) == 0, errors
 
 
@@ -97,8 +97,10 @@ def validate_password_strength(password: str) -> tuple[bool, list[str]]:
 # JWT Token Management
 # =============================================================================
 
+
 class TokenType:
     """Constants for token types."""
+
     ACCESS = "access"
     REFRESH = "refresh"
 
@@ -111,7 +113,7 @@ def _build_token_payload(
 ) -> dict[str, Any]:
     """Build the JWT payload with standard claims."""
     now = datetime.now(timezone.utc)
-    
+
     payload = {
         "sub": str(subject),
         "exp": expires_at,
@@ -120,10 +122,10 @@ def _build_token_payload(
         "type": token_type,
         "iss": settings.APP_NAME,
     }
-    
+
     if additional_claims:
         payload.update(additional_claims)
-    
+
     return payload
 
 
@@ -143,26 +145,26 @@ def create_access_token(
 ) -> str:
     """
     Create a JWT access token.
-    
+
     Args:
         subject: Token subject (usually user ID)
         expires_delta: Custom expiration time
         additional_claims: Extra claims to include
-        
+
     Returns:
         Encoded JWT string
     """
     expires_at = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    
+
     payload = _build_token_payload(
         subject=subject,
         token_type=TokenType.ACCESS,
         expires_at=expires_at,
         additional_claims=additional_claims,
     )
-    
+
     return _encode_token(payload)
 
 
@@ -172,36 +174,36 @@ def create_refresh_token(
 ) -> str:
     """
     Create a JWT refresh token.
-    
+
     Refresh tokens have longer expiration and are used to obtain new access tokens.
-    
+
     Args:
         subject: Token subject (usually user ID)
         expires_delta: Custom expiration time
-        
+
     Returns:
         Encoded JWT string
     """
     expires_at = datetime.now(timezone.utc) + (
         expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     )
-    
+
     payload = _build_token_payload(
         subject=subject,
         token_type=TokenType.REFRESH,
         expires_at=expires_at,
     )
-    
+
     return _encode_token(payload)
 
 
 def decode_token(token: str) -> dict[str, Any] | None:
     """
     Decode and validate a JWT token.
-    
+
     Args:
         token: JWT string to decode
-        
+
     Returns:
         Decoded payload if valid, None otherwise
     """
@@ -222,21 +224,21 @@ def _verify_token(token: str, expected_type: str) -> str | None:
     payload = decode_token(token)
     if payload is None:
         return None
-    
+
     if payload.get("type") != expected_type:
         logger.debug(f"Token type mismatch: expected {expected_type}")
         return None
-    
+
     return payload.get("sub")
 
 
 def verify_access_token(token: str) -> str | None:
     """
     Verify an access token.
-    
+
     Args:
         token: JWT access token
-        
+
     Returns:
         User ID (subject) if valid, None otherwise
     """
@@ -246,10 +248,10 @@ def verify_access_token(token: str) -> str | None:
 def verify_refresh_token(token: str) -> str | None:
     """
     Verify a refresh token.
-    
+
     Args:
         token: JWT refresh token
-        
+
     Returns:
         User ID (subject) if valid, None otherwise
     """
@@ -259,17 +261,17 @@ def verify_refresh_token(token: str) -> str | None:
 def get_token_expiry(token: str) -> datetime | None:
     """
     Get the expiration time of a token.
-    
+
     Args:
         token: JWT token
-        
+
     Returns:
         Expiration datetime if valid, None otherwise
     """
     payload = decode_token(token)
     if payload is None:
         return None
-    
+
     exp = payload.get("exp")
     if exp:
         return datetime.fromtimestamp(exp, tz=timezone.utc)
@@ -280,6 +282,7 @@ def get_token_expiry(token: str) -> datetime | None:
 # Token Blacklisting
 # =============================================================================
 
+
 def _hash_token(token: str) -> str:
     """Create a SHA256 hash of a token for storage."""
     return hashlib.sha256(token.encode()).hexdigest()
@@ -288,29 +291,29 @@ def _hash_token(token: str) -> str:
 class TokenBlacklist:
     """
     Token blacklist manager using Redis.
-    
+
     Used to invalidate tokens before natural expiration,
     such as during logout or password change.
     """
-    
+
     def __init__(self, redis: Redis) -> None:
         self.redis = redis
-    
+
     async def add(self, token: str, expires_at: datetime | None = None) -> bool:
         """
         Add a token to the blacklist.
-        
+
         Args:
             token: Token to blacklist
             expires_at: When the token expires (for TTL)
-            
+
         Returns:
             True if added successfully
         """
         try:
             if expires_at is None:
                 expires_at = get_token_expiry(token)
-            
+
             if expires_at is None:
                 ttl = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
             else:
@@ -318,25 +321,25 @@ class TokenBlacklist:
                 ttl = int((expires_at - now).total_seconds())
                 if ttl <= 0:
                     return True  # Already expired
-            
+
             token_hash = _hash_token(token)
             key = redis_keys.token_blacklist(token_hash)
-            
+
             await self.redis.setex(key, ttl, "1")
             logger.debug(f"Token blacklisted: {token_hash[:16]}...")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to blacklist token: {e}")
             return False
-    
+
     async def is_blacklisted(self, token: str) -> bool:
         """
         Check if a token is blacklisted.
-        
+
         Args:
             token: Token to check
-            
+
         Returns:
             True if blacklisted
         """
@@ -347,7 +350,7 @@ class TokenBlacklist:
         except Exception as e:
             logger.error(f"Failed to check token blacklist: {e}")
             return False  # Fail open
-    
+
     async def remove(self, token: str) -> bool:
         """Remove a token from the blacklist."""
         try:
@@ -358,23 +361,23 @@ class TokenBlacklist:
         except Exception as e:
             logger.error(f"Failed to remove token from blacklist: {e}")
             return False
-    
+
     async def clear_all(self) -> int:
         """
         Clear all blacklisted tokens.
-        
+
         Warning: Re-enables all previously revoked tokens!
-        
+
         Returns:
             Number of tokens removed
         """
         try:
             pattern = redis_keys.token_blacklist_pattern()
             keys = [key async for key in self.redis.scan_iter(match=pattern)]
-            
+
             if keys:
                 await self.redis.delete(*keys)
-            
+
             return len(keys)
         except Exception as e:
             logger.error(f"Failed to clear token blacklist: {e}")

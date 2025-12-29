@@ -1,4 +1,5 @@
 """Application configuration."""
+
 from dotenv import load_dotenv
 import os
 
@@ -13,7 +14,21 @@ class Config:
     ADMINS = os.environ.get("ADMINS", "").split(",")
 
     # Supported languages
-    LANGUAGES = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "ar", "hi", "pl"]
+    LANGUAGES = [
+        "en",
+        "es",
+        "fr",
+        "de",
+        "it",
+        "pt",
+        "ru",
+        "zh",
+        "ja",
+        "ko",
+        "ar",
+        "hi",
+        "pl",
+    ]
 
     # Pagination
     POSTS_PER_PAGE = 25
@@ -75,7 +90,9 @@ class Config:
     AVATAR_SIZE = (256, 256)  # Width, Height
 
     # Email verification
-    EMAIL_VERIFICATION_REQUIRED = os.environ.get("EMAIL_VERIFICATION_REQUIRED", "False") == "True"
+    EMAIL_VERIFICATION_REQUIRED = (
+        os.environ.get("EMAIL_VERIFICATION_REQUIRED", "False") == "True"
+    )
     EMAIL_VERIFICATION_EXPIRY = 24 * 60 * 60  # 24 hours
 
     # JWT tokens

@@ -77,4 +77,3 @@ def update_user_stats() -> int:
     count = 0
     logger.info(f"Stats update completed: {count} users updated")
     return count
-

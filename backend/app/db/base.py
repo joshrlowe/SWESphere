@@ -27,8 +27,7 @@ class Base(DeclarativeBase):
     def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
-            column.name: getattr(self, column.name)
-            for column in self.__table__.columns
+            column.name: getattr(self, column.name) for column in self.__table__.columns
         }
 
     def update(self, **kwargs: Any) -> None:
@@ -41,4 +40,3 @@ class Base(DeclarativeBase):
     def __repr__(self) -> str:
         """String representation of the model."""
         return f"<{self.__class__.__name__}(id={self.id})>"
-

@@ -1,4 +1,5 @@
 """API Authentication endpoints."""
+
 from app import db, limiter
 from app.api import api_bp, json_response, error_response, token_required
 from app.models import User
@@ -25,9 +26,7 @@ def api_login():
     if "username" not in data or "password" not in data:
         return error_response("Username and password required", 400)
 
-    user = db.session.scalar(
-        sa.select(User).where(User.username == data["username"])
-    )
+    user = db.session.scalar(sa.select(User).where(User.username == data["username"]))
 
     if not user:
         return error_response("Invalid username or password", 401)
@@ -46,10 +45,7 @@ def api_login():
     db.session.commit()
 
     token = user.get_api_token()
-    return json_response({
-        "token": token,
-        "user": user.to_dict(include_email=True)
-    })
+    return json_response({"token": token, "user": user.to_dict(include_email=True)})
 
 
 @api_bp.route("/auth/register", methods=["POST"])
@@ -88,10 +84,9 @@ def api_register():
     db.session.commit()
 
     token = user.get_api_token()
-    return json_response({
-        "user": user.to_dict(include_email=True),
-        "token": token
-    }, 201)
+    return json_response(
+        {"user": user.to_dict(include_email=True), "token": token}, 201
+    )
 
 
 @api_bp.route("/auth/me", methods=["GET"])

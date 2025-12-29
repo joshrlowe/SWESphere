@@ -1,9 +1,12 @@
 """
-Test fixtures for repository tests.
+Test fixtures for service tests.
+
+Provides mock repositories and Redis for isolated service testing.
 """
 
 import asyncio
 from typing import Any, AsyncGenerator
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
@@ -13,6 +16,9 @@ from sqlalchemy.pool import StaticPool
 from app.db.base import Base
 from app.models.user import User
 from app.models.post import Post
+from app.models.notification import Notification, NotificationType
+from app.repositories.user_repository import UserRepository
+from app.repositories.post_repository import PostRepository
 
 
 # Use in-memory SQLite for testing
@@ -63,6 +69,34 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture
+async def user_repo(db_session: AsyncSession) -> UserRepository:
+    """Create user repository."""
+    return UserRepository(db_session)
+
+
+@pytest_asyncio.fixture
+async def post_repo(db_session: AsyncSession) -> PostRepository:
+    """Create post repository."""
+    return PostRepository(db_session)
+
+
+@pytest.fixture
+def mock_redis():
+    """Create mock Redis client."""
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value=None)
+    redis.set = AsyncMock(return_value=True)
+    redis.setex = AsyncMock(return_value=True)
+    redis.delete = AsyncMock(return_value=1)
+    redis.exists = AsyncMock(return_value=False)
+    redis.incr = AsyncMock(return_value=1)
+    redis.decr = AsyncMock(return_value=0)
+    redis.publish = AsyncMock(return_value=1)
+    redis.scan_iter = MagicMock(return_value=iter([]))
+    return redis
+
+
+@pytest_asyncio.fixture
 async def user_factory(db_session: AsyncSession):
     """Factory for creating test users."""
     counter = 0
@@ -74,8 +108,10 @@ async def user_factory(db_session: AsyncSession):
         defaults = {
             "username": f"testuser{counter}",
             "email": f"test{counter}@example.com",
-            "password_hash": "hashed_password",
+            "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VBCvZ/0LIqnPGy",  # "password"
             "is_active": True,
+            "failed_login_attempts": 0,
+            "locked_until": None,
         }
         defaults.update(kwargs)
 
@@ -102,7 +138,7 @@ async def post_factory(db_session: AsyncSession, user_factory):
 
         defaults = {
             "user_id": author.id,
-            "body": f"Test post {counter}",
+            "body": f"Test post content {counter}",
         }
         defaults.update(kwargs)
 

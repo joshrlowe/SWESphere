@@ -1,4 +1,5 @@
 """API Notification endpoints."""
+
 from app import db
 from app.api import api_bp, json_response, error_response, token_required
 from app.models import Notification
@@ -21,30 +22,32 @@ def api_get_notifications():
     per_page = min(request.args.get("per_page", 20, type=int), 100)
     unread_only = request.args.get("unread_only", "false").lower() == "true"
 
-    query = g.current_user.notifications.select().order_by(Notification.timestamp.desc())
+    query = g.current_user.notifications.select().order_by(
+        Notification.timestamp.desc()
+    )
 
     if unread_only:
         query = query.where(Notification.read == False)
 
     pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
 
-    return json_response({
-        "notifications": [n.to_dict() for n in pagination.items],
-        "total": pagination.total,
-        "unread_count": g.current_user.unread_notification_count(),
-        "page": page,
-        "per_page": per_page,
-        "pages": pagination.pages,
-    })
+    return json_response(
+        {
+            "notifications": [n.to_dict() for n in pagination.items],
+            "total": pagination.total,
+            "unread_count": g.current_user.unread_notification_count(),
+            "page": page,
+            "per_page": per_page,
+            "pages": pagination.pages,
+        }
+    )
 
 
 @api_bp.route("/notifications/unread-count", methods=["GET"])
 @token_required
 def api_unread_count():
     """Get count of unread notifications."""
-    return json_response({
-        "unread_count": g.current_user.unread_notification_count()
-    })
+    return json_response({"unread_count": g.current_user.unread_notification_count()})
 
 
 @api_bp.route("/notifications/<int:notification_id>/read", methods=["POST"])

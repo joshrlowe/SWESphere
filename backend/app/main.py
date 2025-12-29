@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application lifespan manager for startup/shutdown events.
-    
+
     Handles:
     - Database connection pool initialization
     - Redis connection setup
@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 def create_app() -> FastAPI:
     """
     Create and configure the FastAPI application.
-    
+
     Returns:
         Configured FastAPI application instance
     """
@@ -76,9 +76,17 @@ API requests are rate-limited to prevent abuse:
 - Authenticated: 60 requests/minute
         """,
         version="1.0.0",
-        openapi_url=f"{settings.API_V1_PREFIX}/openapi.json" if not settings.is_production else None,
-        docs_url=f"{settings.API_V1_PREFIX}/docs" if not settings.is_production else None,
-        redoc_url=f"{settings.API_V1_PREFIX}/redoc" if not settings.is_production else None,
+        openapi_url=(
+            f"{settings.API_V1_PREFIX}/openapi.json"
+            if not settings.is_production
+            else None
+        ),
+        docs_url=(
+            f"{settings.API_V1_PREFIX}/docs" if not settings.is_production else None
+        ),
+        redoc_url=(
+            f"{settings.API_V1_PREFIX}/redoc" if not settings.is_production else None
+        ),
         default_response_class=ORJSONResponse,
         lifespan=lifespan,
         # OpenAPI customization
@@ -135,21 +143,21 @@ API requests are rate-limited to prevent abuse:
         """Add request ID and process time headers."""
         request_id = str(uuid4())[:8]
         request.state.request_id = request_id
-        
+
         start_time = time.perf_counter()
         response = await call_next(request)
         process_time = time.perf_counter() - start_time
-        
+
         response.headers["X-Request-ID"] = request_id
         response.headers["X-Process-Time"] = f"{process_time:.4f}"
-        
+
         # Log slow requests
         if process_time > 1.0:
             logger.warning(
                 f"Slow request: {request.method} {request.url.path} "
                 f"took {process_time:.2f}s [request_id={request_id}]"
             )
-        
+
         return response
 
     # ===================
@@ -180,12 +188,14 @@ API requests are rate-limited to prevent abuse:
         errors = []
         for error in exc.errors():
             field = ".".join(str(loc) for loc in error["loc"])
-            errors.append({
-                "field": field,
-                "message": error["msg"],
-                "type": error["type"],
-            })
-        
+            errors.append(
+                {
+                    "field": field,
+                    "message": error["msg"],
+                    "type": error["type"],
+                }
+            )
+
         return ORJSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
@@ -205,12 +215,12 @@ API requests are rate-limited to prevent abuse:
         """Handle unexpected exceptions."""
         request_id = getattr(request.state, "request_id", "unknown")
         logger.exception(f"Unhandled exception [request_id={request_id}]: {exc}")
-        
+
         # Don't expose internal errors in production
         message = "Internal server error"
         if settings.DEBUG:
             message = str(exc)
-        
+
         return ORJSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
@@ -239,7 +249,7 @@ API requests are rate-limited to prevent abuse:
     async def health_check() -> dict[str, Any]:
         """
         Basic health check endpoint.
-        
+
         Returns application status and version.
         """
         return {
@@ -258,17 +268,17 @@ API requests are rate-limited to prevent abuse:
     async def readiness_check() -> dict[str, Any]:
         """
         Readiness check endpoint.
-        
+
         Verifies database and Redis connectivity.
         """
         from app.db.session import engine
         from app.dependencies import get_redis
-        
+
         checks: dict[str, Any] = {
             "status": "ready",
             "checks": {},
         }
-        
+
         # Check database
         try:
             async with engine.connect() as conn:
@@ -277,7 +287,7 @@ API requests are rate-limited to prevent abuse:
         except Exception as e:
             checks["status"] = "degraded"
             checks["checks"]["database"] = f"error: {str(e)}"
-        
+
         # Check Redis
         try:
             redis = await get_redis()
@@ -286,7 +296,7 @@ API requests are rate-limited to prevent abuse:
         except Exception as e:
             checks["status"] = "degraded"
             checks["checks"]["redis"] = f"error: {str(e)}"
-        
+
         return checks
 
     @app.get(
@@ -297,7 +307,7 @@ API requests are rate-limited to prevent abuse:
     async def liveness_check() -> dict[str, str]:
         """
         Liveness check endpoint.
-        
+
         Simple check that the application is running.
         """
         return {"status": "alive"}

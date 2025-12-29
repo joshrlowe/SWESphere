@@ -18,20 +18,20 @@ if TYPE_CHECKING:
 class Comment(Base, BaseModelMixin, SoftDeleteMixin):
     """
     Comment model for post comments with nested reply support.
-    
+
     Attributes:
         id: Primary key
         body: Comment content (max 500 characters)
         user_id: Foreign key to comment author
         post_id: Foreign key to parent post
         parent_id: Foreign key to parent comment (for nested replies)
-    
+
     Relationships:
         author: User who wrote the comment
         post: Post this comment belongs to
         parent: Parent comment (if this is a reply)
         replies: Child comments replying to this comment
-    
+
     The comment tree supports unlimited nesting depth, but the UI typically
     displays only 2-3 levels for readability.
     """
@@ -161,7 +161,7 @@ class Comment(Base, BaseModelMixin, SoftDeleteMixin):
     def get_thread(self) -> list["Comment"]:
         """
         Get the full thread from root to this comment.
-        
+
         Returns:
             List of comments from root to this comment (inclusive)
         """
@@ -175,7 +175,7 @@ class Comment(Base, BaseModelMixin, SoftDeleteMixin):
     def get_root(self) -> "Comment":
         """
         Get the root (top-level) comment of this thread.
-        
+
         Returns:
             The root comment
         """
@@ -186,7 +186,7 @@ class Comment(Base, BaseModelMixin, SoftDeleteMixin):
     def get_all_descendants(self) -> list["Comment"]:
         """
         Get all descendant comments (children, grandchildren, etc).
-        
+
         Returns:
             Flat list of all descendant comments
         """
@@ -204,12 +204,12 @@ class Comment(Base, BaseModelMixin, SoftDeleteMixin):
     ) -> dict[str, Any]:
         """
         Convert comment to dictionary for API responses.
-        
+
         Args:
             include_author: Include author details
             include_replies: Include nested replies
             max_depth: Maximum nesting depth for replies
-            
+
         Returns:
             Dictionary representation
         """

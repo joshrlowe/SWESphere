@@ -166,4 +166,3 @@ def send_email_verification(user_email: str, verification_token: str) -> bool:
     """
 
     return send_email.delay(user_email, subject, html_body, text_body)
-

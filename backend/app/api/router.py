@@ -14,4 +14,3 @@ api_router.include_router(comments.router, prefix="/comments", tags=["Comments"]
 api_router.include_router(
     notifications.router, prefix="/notifications", tags=["Notifications"]
 )
-

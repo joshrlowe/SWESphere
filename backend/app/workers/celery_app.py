@@ -19,19 +19,15 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
-    
     # Task execution settings
     task_acks_late=True,
     task_reject_on_worker_lost=True,
-    
     # Result settings
     result_expires=3600,  # 1 hour
-    
     # Rate limiting
     task_annotations={
         "app.workers.tasks.email.*": {"rate_limit": "10/m"},
     },
-    
     # Beat schedule for periodic tasks
     beat_schedule={
         "cleanup-expired-tokens": {
@@ -50,4 +46,3 @@ celery_app.conf.update(
 def debug_task(self):
     """Debug task for testing Celery."""
     print(f"Request: {self.request!r}")
-

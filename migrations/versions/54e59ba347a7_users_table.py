@@ -1,7 +1,7 @@
 """users table
 
 Revision ID: 54e59ba347a7
-Revises: 
+Revises:
 Create Date: 2024-03-29 12:08:01.091927
 
 """

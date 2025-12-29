@@ -1,4 +1,5 @@
 """Database models for SWESphere."""
+
 from app import app, db, login
 from datetime import datetime, timezone, timedelta
 from flask_login import UserMixin
@@ -232,7 +233,7 @@ class User(db.Model, UserMixin):
         progressive = app.config.get("LOCKOUT_PROGRESSIVE", True)
 
         if progressive:
-            duration = base_duration * (2 ** self.lockout_count)
+            duration = base_duration * (2**self.lockout_count)
         else:
             duration = base_duration
 
@@ -263,13 +264,18 @@ class User(db.Model, UserMixin):
     # Notification methods
     def unread_notification_count(self) -> int:
         """Get count of unread notifications."""
-        return db.session.scalar(
-            sa.select(sa.func.count())
-            .select_from(Notification)
-            .where(Notification.user_id == self.id, Notification.read == False)
-        ) or 0
+        return (
+            db.session.scalar(
+                sa.select(sa.func.count())
+                .select_from(Notification)
+                .where(Notification.user_id == self.id, Notification.read == False)
+            )
+            or 0
+        )
 
-    def add_notification(self, name: str, data: dict, actor_id: int = None) -> "Notification":
+    def add_notification(
+        self, name: str, data: dict, actor_id: int = None
+    ) -> "Notification":
         """Add a notification for this user."""
         notification = Notification(
             name=name,

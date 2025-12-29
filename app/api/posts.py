@@ -1,4 +1,5 @@
 """API Post endpoints."""
+
 from app import db
 from app.api import api_bp, json_response, error_response, token_required
 from app.models import User, Post, Comment
@@ -34,13 +35,15 @@ def api_get_posts():
         post_dict["liked"] = g.current_user.has_liked(post)
         posts_data.append(post_dict)
 
-    return json_response({
-        "posts": posts_data,
-        "total": pagination.total,
-        "page": page,
-        "per_page": per_page,
-        "pages": pagination.pages,
-    })
+    return json_response(
+        {
+            "posts": posts_data,
+            "total": pagination.total,
+            "page": page,
+            "per_page": per_page,
+            "pages": pagination.pages,
+        }
+    )
 
 
 @api_bp.route("/posts", methods=["POST"])
@@ -117,15 +120,12 @@ def api_like_post(post_id):
         post.author.add_notification(
             "post_liked",
             {"post_id": post.id, "username": g.current_user.username},
-            actor_id=g.current_user.id
+            actor_id=g.current_user.id,
         )
 
     db.session.commit()
 
-    return json_response({
-        "message": "Post liked",
-        "likes_count": post.likes_count()
-    })
+    return json_response({"message": "Post liked", "likes_count": post.likes_count()})
 
 
 @api_bp.route("/posts/<int:post_id>/unlike", methods=["POST"])
@@ -142,10 +142,7 @@ def api_unlike_post(post_id):
     g.current_user.unlike_post(post)
     db.session.commit()
 
-    return json_response({
-        "message": "Post unliked",
-        "likes_count": post.likes_count()
-    })
+    return json_response({"message": "Post unliked", "likes_count": post.likes_count()})
 
 
 @api_bp.route("/posts/<int:post_id>/comments", methods=["GET"])
@@ -162,13 +159,15 @@ def api_get_comments(post_id):
     query = post.comments.select().order_by(Comment.timestamp.asc())
     pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
 
-    return json_response({
-        "comments": [c.to_dict() for c in pagination.items],
-        "total": pagination.total,
-        "page": page,
-        "per_page": per_page,
-        "pages": pagination.pages,
-    })
+    return json_response(
+        {
+            "comments": [c.to_dict() for c in pagination.items],
+            "total": pagination.total,
+            "page": page,
+            "per_page": per_page,
+            "pages": pagination.pages,
+        }
+    )
 
 
 @api_bp.route("/posts/<int:post_id>/comments", methods=["POST"])
@@ -195,8 +194,12 @@ def api_create_comment(post_id):
     if post.author.id != g.current_user.id:
         post.author.add_notification(
             "new_comment",
-            {"post_id": post.id, "comment_id": comment.id, "username": g.current_user.username},
-            actor_id=g.current_user.id
+            {
+                "post_id": post.id,
+                "comment_id": comment.id,
+                "username": g.current_user.username,
+            },
+            actor_id=g.current_user.id,
         )
 
     db.session.commit()
@@ -212,7 +215,10 @@ def api_delete_comment(comment_id):
     if not comment:
         return error_response("Comment not found", 404)
 
-    if comment.author.id != g.current_user.id and comment.post.author.id != g.current_user.id:
+    if (
+        comment.author.id != g.current_user.id
+        and comment.post.author.id != g.current_user.id
+    ):
         return error_response("Not authorized to delete this comment", 403)
 
     db.session.delete(comment)
@@ -244,15 +250,20 @@ def api_search():
     results = {}
 
     if search_type in ["users", "all"]:
-        user_query = sa.select(User).where(
-            sa.or_(
-                User.username.ilike(f"%{query}%"),
-                User.about_me.ilike(f"%{query}%")
+        user_query = (
+            sa.select(User)
+            .where(
+                sa.or_(
+                    User.username.ilike(f"%{query}%"), User.about_me.ilike(f"%{query}%")
+                )
             )
-        ).order_by(User.username)
+            .order_by(User.username)
+        )
 
         if search_type == "users":
-            pagination = db.paginate(user_query, page=page, per_page=per_page, error_out=False)
+            pagination = db.paginate(
+                user_query, page=page, per_page=per_page, error_out=False
+            )
             results = {
                 "users": [u.to_dict() for u in pagination.items],
                 "total": pagination.total,
@@ -265,12 +276,16 @@ def api_search():
             results["users"] = [u.to_dict() for u in users]
 
     if search_type in ["posts", "all"]:
-        post_query = sa.select(Post).where(
-            Post.body.ilike(f"%{query}%")
-        ).order_by(Post.timestamp.desc())
+        post_query = (
+            sa.select(Post)
+            .where(Post.body.ilike(f"%{query}%"))
+            .order_by(Post.timestamp.desc())
+        )
 
         if search_type == "posts":
-            pagination = db.paginate(post_query, page=page, per_page=per_page, error_out=False)
+            pagination = db.paginate(
+                post_query, page=page, per_page=per_page, error_out=False
+            )
             posts_data = []
             for post in pagination.items:
                 post_dict = post.to_dict()

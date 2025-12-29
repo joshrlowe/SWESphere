@@ -1,4 +1,5 @@
 """REST API Blueprint for SWESphere."""
+
 from flask import Blueprint, jsonify, request, g
 from functools import wraps
 
@@ -7,6 +8,7 @@ api_bp = Blueprint("api", __name__)
 
 def token_required(f):
     """Decorator to require API token authentication."""
+
     @wraps(f)
     def decorated(*args, **kwargs):
         from app.models import User

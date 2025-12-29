@@ -94,4 +94,3 @@ class CommentListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
-

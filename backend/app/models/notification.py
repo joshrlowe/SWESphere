@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class NotificationType(str, enum.Enum):
     """
     Enumeration of notification types.
-    
+
     Each type has associated data expectations:
     - NEW_FOLLOWER: {follower_id, follower_username}
     - POST_LIKED: {post_id, liker_id, liker_username}
@@ -45,11 +45,11 @@ class NotificationType(str, enum.Enum):
 class Notification(Base, BaseModelMixin):
     """
     Notification model for user notifications.
-    
+
     Notifications are created when certain events occur (new follower,
     post liked, etc.) and are delivered to users via the API and
     optionally push notifications.
-    
+
     Attributes:
         id: Primary key
         type: Type of notification (enum)
@@ -57,7 +57,7 @@ class Notification(Base, BaseModelMixin):
         read: Whether the notification has been read
         user_id: Foreign key to notification recipient
         actor_id: Foreign key to user who triggered the notification
-    
+
     Relationships:
         user: User receiving the notification
         actor: User who triggered the notification
@@ -149,7 +149,7 @@ class Notification(Base, BaseModelMixin):
     def data(self) -> dict[str, Any]:
         """
         Get the notification payload as a dictionary.
-        
+
         Returns:
             Parsed JSON payload
         """
@@ -162,7 +162,7 @@ class Notification(Base, BaseModelMixin):
     def data(self, value: dict[str, Any]) -> None:
         """
         Set the notification payload.
-        
+
         Args:
             value: Dictionary to serialize as JSON
         """
@@ -171,11 +171,11 @@ class Notification(Base, BaseModelMixin):
     def get_data(self, key: str, default: Any = None) -> Any:
         """
         Get a value from the notification payload.
-        
+
         Args:
             key: Key to look up
             default: Default value if key not found
-            
+
         Returns:
             Value from payload or default
         """
@@ -184,7 +184,7 @@ class Notification(Base, BaseModelMixin):
     def set_data(self, key: str, value: Any) -> None:
         """
         Set a value in the notification payload.
-        
+
         Args:
             key: Key to set
             value: Value to store
@@ -216,12 +216,12 @@ class Notification(Base, BaseModelMixin):
     ) -> "Notification":
         """
         Create a new follower notification.
-        
+
         Args:
             user_id: User being followed
             follower_id: User who followed
             follower_username: Follower's username
-            
+
         Returns:
             New Notification instance
         """
@@ -246,13 +246,13 @@ class Notification(Base, BaseModelMixin):
     ) -> "Notification":
         """
         Create a post liked notification.
-        
+
         Args:
             user_id: Post author
             post_id: Post that was liked
             liker_id: User who liked
             liker_username: Liker's username
-            
+
         Returns:
             New Notification instance
         """
@@ -279,14 +279,14 @@ class Notification(Base, BaseModelMixin):
     ) -> "Notification":
         """
         Create a post commented notification.
-        
+
         Args:
             user_id: Post author
             post_id: Post that was commented on
             comment_id: The new comment
             commenter_id: User who commented
             commenter_username: Commenter's username
-            
+
         Returns:
             New Notification instance
         """
@@ -313,13 +313,13 @@ class Notification(Base, BaseModelMixin):
     ) -> "Notification":
         """
         Create a mention notification.
-        
+
         Args:
             user_id: User who was mentioned
             post_id: Post containing the mention
             mentioner_id: User who mentioned
             mentioner_username: Mentioner's username
-            
+
         Returns:
             New Notification instance
         """
@@ -343,11 +343,11 @@ class Notification(Base, BaseModelMixin):
     ) -> "Notification":
         """
         Create a system notification.
-        
+
         Args:
             user_id: User to notify
             message: System message
-            
+
         Returns:
             New Notification instance
         """
@@ -366,7 +366,7 @@ class Notification(Base, BaseModelMixin):
     def message(self) -> str:
         """
         Generate a human-readable message for this notification.
-        
+
         Returns:
             Notification message string
         """
@@ -375,7 +375,9 @@ class Notification(Base, BaseModelMixin):
             "follower_username",
             data.get(
                 "liker_username",
-                data.get("commenter_username", data.get("mentioner_username", "Someone")),
+                data.get(
+                    "commenter_username", data.get("mentioner_username", "Someone")
+                ),
             ),
         )
 
@@ -395,10 +397,10 @@ class Notification(Base, BaseModelMixin):
     def to_dict(self, include_actor: bool = True) -> dict[str, Any]:
         """
         Convert notification to dictionary for API responses.
-        
+
         Args:
             include_actor: Include actor user details
-            
+
         Returns:
             Dictionary representation
         """

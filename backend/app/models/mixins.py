@@ -10,9 +10,9 @@ from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 class TimestampMixin:
     """
     Mixin that adds created_at and updated_at timestamps to models.
-    
+
     The updated_at field is automatically updated on every modification.
-    
+
     Usage:
         class MyModel(Base, TimestampMixin):
             __tablename__ = "my_table"
@@ -47,22 +47,22 @@ class TimestampMixin:
 class SoftDeleteMixin:
     """
     Mixin that adds soft delete functionality to models.
-    
+
     Instead of permanently deleting records, they are marked as deleted
     with a timestamp. Use the is_deleted property to check status.
-    
+
     Usage:
         class MyModel(Base, SoftDeleteMixin):
             __tablename__ = "my_table"
             id: Mapped[int] = mapped_column(primary_key=True)
-        
+
         # Soft delete
         instance.soft_delete()
-        
+
         # Check if deleted
         if instance.is_deleted:
             ...
-        
+
         # Restore
         instance.restore()
     """
@@ -94,7 +94,7 @@ class SoftDeleteMixin:
 class TableNameMixin:
     """
     Mixin that automatically generates table name from class name.
-    
+
     Converts CamelCase to snake_case and pluralizes.
     Example: UserPost -> user_posts
     """
@@ -103,6 +103,7 @@ class TableNameMixin:
     def __tablename__(cls) -> str:
         """Generate table name from class name."""
         import re
+
         # Convert CamelCase to snake_case
         name = re.sub(r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
         # Simple pluralization (add 's' or 'es')
@@ -114,7 +115,7 @@ class TableNameMixin:
 class ReprMixin:
     """
     Mixin that provides a useful __repr__ for models.
-    
+
     Shows the class name and primary key(s).
     """
 
@@ -138,47 +139,47 @@ class ToDictMixin:
     ) -> dict[str, Any]:
         """
         Convert model to dictionary.
-        
+
         Args:
             exclude: Set of field names to exclude
             include: Set of field names to include (if provided, only these are included)
-        
+
         Returns:
             Dictionary representation of the model
         """
         exclude = exclude or set()
         result = {}
-        
+
         for column in self.__table__.columns:
             if column.name in exclude:
                 continue
             if include and column.name not in include:
                 continue
-            
+
             value = getattr(self, column.name)
-            
+
             # Handle datetime serialization
             if isinstance(value, datetime):
                 value = value.isoformat()
-            
+
             result[column.name] = value
-        
+
         return result
 
 
 class BaseModelMixin(TimestampMixin, ReprMixin, ToDictMixin):
     """
     Combined mixin with all common functionality.
-    
+
     Includes:
     - created_at, updated_at timestamps
     - Useful __repr__
     - to_dict() serialization
-    
+
     Usage:
         class MyModel(Base, BaseModelMixin):
             __tablename__ = "my_table"
             id: Mapped[int] = mapped_column(primary_key=True)
     """
-    pass
 
+    pass

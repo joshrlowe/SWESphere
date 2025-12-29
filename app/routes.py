@@ -1,4 +1,5 @@
 """Route handlers for SWESphere."""
+
 from app import app, db, limiter, audit_logger
 from app.email import send_password_reset_email
 from app.forms import (
@@ -183,8 +184,12 @@ def login():
             "login.html",
             title=_("Sign In"),
             form=form,
-            username_errors_length=len(form.username.errors) if form.username.errors else 0,
-            password_errors_length=len(form.password.errors) if form.password.errors else 0,
+            username_errors_length=(
+                len(form.username.errors) if form.username.errors else 0
+            ),
+            password_errors_length=(
+                len(form.password.errors) if form.password.errors else 0
+            ),
             nonce=nonce,
         )
     )
@@ -223,10 +228,16 @@ def register():
             "register.html",
             title=_("Register"),
             form=form,
-            username_errors_length=len(form.username.errors) if form.username.errors else 0,
+            username_errors_length=(
+                len(form.username.errors) if form.username.errors else 0
+            ),
             email_errors_length=len(form.email.errors) if form.email.errors else 0,
-            password_errors_length=len(form.password.errors) if form.password.errors else 0,
-            password2_errors_length=len(form.password2.errors) if form.password2.errors else 0,
+            password_errors_length=(
+                len(form.password.errors) if form.password.errors else 0
+            ),
+            password2_errors_length=(
+                len(form.password2.errors) if form.password2.errors else 0
+            ),
             nonce=nonce,
         )
     )
@@ -294,8 +305,12 @@ def edit_profile():
             title=_("Edit Profile"),
             form=form,
             avatar_form=avatar_form,
-            username_errors_length=len(form.username.errors) if form.username.errors else 0,
-            about_me_errors_length=len(form.about_me.errors) if form.about_me.errors else 0,
+            username_errors_length=(
+                len(form.username.errors) if form.username.errors else 0
+            ),
+            about_me_errors_length=(
+                len(form.about_me.errors) if form.about_me.errors else 0
+            ),
             nonce=nonce,
         )
     )
@@ -337,8 +352,7 @@ def upload_avatar():
 def uploaded_avatar(filename):
     """Serve uploaded avatars."""
     return send_from_directory(
-        os.path.join(app.config["UPLOAD_FOLDER"], "avatars"),
-        filename
+        os.path.join(app.config["UPLOAD_FOLDER"], "avatars"), filename
     )
 
 
@@ -362,7 +376,7 @@ def follow(username):
         user.add_notification(
             "new_follower",
             {"username": current_user.username},
-            actor_id=current_user.id
+            actor_id=current_user.id,
         )
 
         db.session.commit()
@@ -413,15 +427,12 @@ def like_post(post_id):
             post.author.add_notification(
                 "post_liked",
                 {"post_id": post.id, "username": current_user.username},
-                actor_id=current_user.id
+                actor_id=current_user.id,
             )
 
     db.session.commit()
 
-    return jsonify({
-        "action": action,
-        "likes_count": post.likes_count()
-    })
+    return jsonify({"action": action, "likes_count": post.likes_count()})
 
 
 @app.route("/post/<int:post_id>/comment", methods=["POST"])
@@ -443,7 +454,7 @@ def add_comment(post_id):
             post.author.add_notification(
                 "new_comment",
                 {"post_id": post.id, "username": current_user.username},
-                actor_id=current_user.id
+                actor_id=current_user.id,
             )
 
         db.session.commit()
@@ -465,27 +476,29 @@ def search():
     # Search users
     users = db.session.scalars(
         sa.select(User)
-        .where(sa.or_(
-            User.username.ilike(f"%{query}%"),
-            User.about_me.ilike(f"%{query}%")
-        ))
+        .where(
+            sa.or_(User.username.ilike(f"%{query}%"), User.about_me.ilike(f"%{query}%"))
+        )
         .limit(5)
     ).all()
 
     # Search posts
-    posts_query = sa.select(Post).where(
-        Post.body.ilike(f"%{query}%")
-    ).order_by(Post.timestamp.desc())
-
-    posts = db.paginate(
-        posts_query,
-        page=page,
-        per_page=app.config["POSTS_PER_PAGE"],
-        error_out=False
+    posts_query = (
+        sa.select(Post)
+        .where(Post.body.ilike(f"%{query}%"))
+        .order_by(Post.timestamp.desc())
     )
 
-    next_url = url_for("search", q=query, page=posts.next_num) if posts.has_next else None
-    prev_url = url_for("search", q=query, page=posts.prev_num) if posts.has_prev else None
+    posts = db.paginate(
+        posts_query, page=page, per_page=app.config["POSTS_PER_PAGE"], error_out=False
+    )
+
+    next_url = (
+        url_for("search", q=query, page=posts.next_num) if posts.has_next else None
+    )
+    prev_url = (
+        url_for("search", q=query, page=posts.prev_num) if posts.has_prev else None
+    )
 
     nonce = generate_nonce()
     response = make_response(
@@ -522,8 +535,16 @@ def notifications():
             "notifications.html",
             title=_("Notifications"),
             notifications=notifs.items,
-            next_url=url_for("notifications", page=notifs.next_num) if notifs.has_next else None,
-            prev_url=url_for("notifications", page=notifs.prev_num) if notifs.has_prev else None,
+            next_url=(
+                url_for("notifications", page=notifs.next_num)
+                if notifs.has_next
+                else None
+            ),
+            prev_url=(
+                url_for("notifications", page=notifs.prev_num)
+                if notifs.has_prev
+                else None
+            ),
             nonce=nonce,
         )
     )

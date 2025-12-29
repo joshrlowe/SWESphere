@@ -51,4 +51,3 @@ class EmailVerificationRequest(BaseModel):
     """Email verification request schema."""
 
     token: str
-

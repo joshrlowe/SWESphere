@@ -1,4 +1,5 @@
 """Tests for web routes."""
+
 import pytest
 from app import db
 from app.models import User
@@ -43,12 +44,16 @@ class TestAuthentication:
 
     def test_register_user(self, client, app):
         """Test user registration."""
-        response = client.post("/register", data={
-            "username": "newuser",
-            "email": "newuser@example.com",
-            "password": "StrongPass123!",
-            "password2": "StrongPass123!",
-        }, follow_redirects=True)
+        response = client.post(
+            "/register",
+            data={
+                "username": "newuser",
+                "email": "newuser@example.com",
+                "password": "StrongPass123!",
+                "password2": "StrongPass123!",
+            },
+            follow_redirects=True,
+        )
 
         assert response.status_code == 200
 
@@ -60,31 +65,42 @@ class TestAuthentication:
     def test_register_duplicate_username(self, client, sample_user, app):
         """Test registration with duplicate username fails."""
         with app.app_context():
-            response = client.post("/register", data={
-                "username": "testuser",  # Already exists
-                "email": "another@example.com",
-                "password": "password123",
-                "password2": "password123",
-            })
+            response = client.post(
+                "/register",
+                data={
+                    "username": "testuser",  # Already exists
+                    "email": "another@example.com",
+                    "password": "password123",
+                    "password2": "password123",
+                },
+            )
 
             assert response.status_code == 200
             assert b"Please use a different username" in response.data
 
     def test_login_valid_credentials(self, client, sample_user, app):
         """Test login with valid credentials."""
-        response = client.post("/login", data={
-            "username": "testuser",
-            "password": "password123",
-        }, follow_redirects=True)
+        response = client.post(
+            "/login",
+            data={
+                "username": "testuser",
+                "password": "password123",
+            },
+            follow_redirects=True,
+        )
 
         assert response.status_code == 200
 
     def test_login_invalid_credentials(self, client, sample_user, app):
         """Test login with invalid credentials."""
-        response = client.post("/login", data={
-            "username": "testuser",
-            "password": "wrongpassword",
-        }, follow_redirects=True)
+        response = client.post(
+            "/login",
+            data={
+                "username": "testuser",
+                "password": "wrongpassword",
+            },
+            follow_redirects=True,
+        )
 
         assert response.status_code == 200
         assert b"Invalid username or password" in response.data
@@ -121,18 +137,26 @@ class TestAuthenticatedRoutes:
 
     def test_edit_profile_submit(self, auth_client, app):
         """Test editing profile."""
-        response = auth_client.post("/edit_profile", data={
-            "username": "testuser",
-            "about_me": "Updated bio",
-        }, follow_redirects=True)
+        response = auth_client.post(
+            "/edit_profile",
+            data={
+                "username": "testuser",
+                "about_me": "Updated bio",
+            },
+            follow_redirects=True,
+        )
 
         assert response.status_code == 200
 
     def test_create_post(self, auth_client, app):
         """Test creating a new post."""
-        response = auth_client.post("/", data={
-            "post": "This is a test post!",
-        }, follow_redirects=True)
+        response = auth_client.post(
+            "/",
+            data={
+                "post": "This is a test post!",
+            },
+            follow_redirects=True,
+        )
 
         assert response.status_code == 200
 

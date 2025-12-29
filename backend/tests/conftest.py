@@ -108,4 +108,3 @@ async def auth_headers(test_user: dict[str, Any]) -> dict[str, str]:
 
     token = create_access_token(subject=test_user["id"])
     return {"Authorization": f"Bearer {token}"}
-

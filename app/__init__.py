@@ -1,4 +1,5 @@
 """Flask application factory and extensions."""
+
 from config import Config
 from flask import Flask, g, request
 from flask_babel import Babel, lazy_gettext as _l
@@ -73,6 +74,7 @@ from app import routes, models, errors
 # Register API blueprint
 try:
     from app.api import api_bp
+
     app.register_blueprint(api_bp, url_prefix="/api/v1")
 except ImportError:
     pass  # API module not yet created
@@ -81,10 +83,11 @@ except ImportError:
 socketio = None
 try:
     from flask_socketio import SocketIO
+
     socketio = SocketIO(
         app,
         message_queue=app.config.get("SOCKETIO_MESSAGE_QUEUE"),
-        cors_allowed_origins="*"
+        cors_allowed_origins="*",
     )
     from app import events  # Import socket event handlers
 except ImportError:

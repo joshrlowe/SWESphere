@@ -18,21 +18,21 @@ if TYPE_CHECKING:
 class Post(Base, BaseModelMixin, SoftDeleteMixin):
     """
     Post model representing a user's tweet/post.
-    
+
     Attributes:
         id: Primary key
         body: Post content (max 280 characters)
         media_url: Optional media attachment URL
         media_type: Type of media (image, video, gif)
-        
+
         user_id: Foreign key to author
         reply_to_id: Foreign key to parent post (for replies)
         repost_of_id: Foreign key to original post (for reposts)
-        
+
         likes_count: Denormalized count of likes
         comments_count: Denormalized count of comments
         reposts_count: Denormalized count of reposts
-    
+
     Relationships:
         author: User who created the post
         comments: Comments on this post
@@ -228,12 +228,12 @@ class Post(Base, BaseModelMixin, SoftDeleteMixin):
     ) -> dict[str, Any]:
         """
         Convert post to dictionary for API responses.
-        
+
         Args:
             include_author: Include author details
             include_counts: Include like/comment/repost counts
             current_user_id: Current user's ID for is_liked check
-            
+
         Returns:
             Dictionary representation
         """
@@ -268,13 +268,13 @@ class Post(Base, BaseModelMixin, SoftDeleteMixin):
 
         # Check if current user has liked this post
         if current_user_id is not None:
-            data["is_liked"] = any(
-                user.id == current_user_id for user in self.liked_by
-            )
+            data["is_liked"] = any(user.id == current_user_id for user in self.liked_by)
         else:
             data["is_liked"] = False
 
         return data
 
     def __repr__(self) -> str:
-        return f"<Post(id={self.id}, user_id={self.user_id}, body={self.body[:20]!r}...)>"
+        return (
+            f"<Post(id={self.id}, user_id={self.user_id}, body={self.body[:20]!r}...)>"
+        )

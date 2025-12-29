@@ -127,9 +127,7 @@ async def delete_comment(
     """
     Delete a comment. Only the author can delete their comments.
     """
-    result = await db.execute(
-        select(Comment).where(Comment.id == comment_id)
-    )
+    result = await db.execute(select(Comment).where(Comment.id == comment_id))
     comment = result.scalar_one_or_none()
 
     if not comment:
@@ -173,4 +171,3 @@ async def get_comment_replies(
     comments = result.scalars().all()
 
     return [CommentResponse.model_validate(c) for c in comments]
-

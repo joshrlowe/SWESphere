@@ -1,4 +1,5 @@
 """API User endpoints."""
+
 from app import db
 from app.api import api_bp, json_response, error_response, token_required
 from app.models import User, Post
@@ -26,21 +27,22 @@ def api_get_users():
     if search:
         query = query.where(
             sa.or_(
-                User.username.ilike(f"%{search}%"),
-                User.about_me.ilike(f"%{search}%")
+                User.username.ilike(f"%{search}%"), User.about_me.ilike(f"%{search}%")
             )
         )
 
     query = query.order_by(User.username)
     pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
 
-    return json_response({
-        "users": [user.to_dict() for user in pagination.items],
-        "total": pagination.total,
-        "page": page,
-        "per_page": per_page,
-        "pages": pagination.pages,
-    })
+    return json_response(
+        {
+            "users": [user.to_dict() for user in pagination.items],
+            "total": pagination.total,
+            "page": page,
+            "per_page": per_page,
+            "pages": pagination.pages,
+        }
+    )
 
 
 @api_bp.route("/users/<username>", methods=["GET"])
@@ -78,13 +80,15 @@ def api_get_user_posts(username):
         post_dict["liked"] = g.current_user.has_liked(post)
         posts_data.append(post_dict)
 
-    return json_response({
-        "posts": posts_data,
-        "total": pagination.total,
-        "page": page,
-        "per_page": per_page,
-        "pages": pagination.pages,
-    })
+    return json_response(
+        {
+            "posts": posts_data,
+            "total": pagination.total,
+            "page": page,
+            "per_page": per_page,
+            "pages": pagination.pages,
+        }
+    )
 
 
 @api_bp.route("/users/<username>/follow", methods=["POST"])
@@ -107,7 +111,7 @@ def api_follow_user(username):
     user.add_notification(
         "new_follower",
         {"username": g.current_user.username},
-        actor_id=g.current_user.id
+        actor_id=g.current_user.id,
     )
 
     db.session.commit()
@@ -146,13 +150,15 @@ def api_get_followers(username):
     query = user.followers.select()
     pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
 
-    return json_response({
-        "users": [u.to_dict() for u in pagination.items],
-        "total": pagination.total,
-        "page": page,
-        "per_page": per_page,
-        "pages": pagination.pages,
-    })
+    return json_response(
+        {
+            "users": [u.to_dict() for u in pagination.items],
+            "total": pagination.total,
+            "page": page,
+            "per_page": per_page,
+            "pages": pagination.pages,
+        }
+    )
 
 
 @api_bp.route("/users/<username>/following", methods=["GET"])
@@ -169,10 +175,12 @@ def api_get_following(username):
     query = user.following.select()
     pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
 
-    return json_response({
-        "users": [u.to_dict() for u in pagination.items],
-        "total": pagination.total,
-        "page": page,
-        "per_page": per_page,
-        "pages": pagination.pages,
-    })
+    return json_response(
+        {
+            "users": [u.to_dict() for u in pagination.items],
+            "total": pagination.total,
+            "page": page,
+            "per_page": per_page,
+            "pages": pagination.pages,
+        }
+    )

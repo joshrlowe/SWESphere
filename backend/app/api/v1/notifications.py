@@ -115,4 +115,3 @@ async def delete_notification(
     Delete a notification.
     """
     await notification_service.delete_notification(notification_id, current_user.id)
-

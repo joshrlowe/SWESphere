@@ -1,4 +1,5 @@
 """WebSocket event handlers for real-time features."""
+
 from flask import g
 from flask_login import current_user
 from flask_socketio import emit, join_room, leave_room
@@ -51,18 +52,14 @@ try:
 
     def send_notification(user_id: int, notification_data: dict):
         """Send a notification to a specific user via WebSocket."""
-        socketio.emit(
-            "new_notification",
-            notification_data,
-            room=f"user_{user_id}"
-        )
+        socketio.emit("new_notification", notification_data, room=f"user_{user_id}")
 
     def send_post_update(post_id: int, update_type: str, data: dict):
         """Send an update about a post to all subscribers."""
         socketio.emit(
             "post_update",
             {"type": update_type, "post_id": post_id, **data},
-            room=f"post_{post_id}"
+            room=f"post_{post_id}",
         )
 
 except ImportError:

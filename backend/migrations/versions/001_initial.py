@@ -28,7 +28,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Create all tables and indexes."""
-    
+
     # ===================
     # Users Table
     # ===================
@@ -78,7 +78,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("username"),
         sa.UniqueConstraint("email"),
     )
-    
+
     # Users indexes
     op.create_index("ix_users_id", "users", ["id"])
     op.create_index("ix_users_username", "users", ["username"])
@@ -125,7 +125,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["reply_to_id"], ["posts.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["repost_of_id"], ["posts.id"], ondelete="SET NULL"),
     )
-    
+
     # Posts indexes
     op.create_index("ix_posts_id", "posts", ["id"])
     op.create_index("ix_posts_user_id", "posts", ["user_id"])
@@ -171,15 +171,21 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["post_id"], ["posts.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["parent_id"], ["comments.id"], ondelete="CASCADE"),
     )
-    
+
     # Comments indexes
     op.create_index("ix_comments_id", "comments", ["id"])
     op.create_index("ix_comments_user_id", "comments", ["user_id"])
     op.create_index("ix_comments_post_id", "comments", ["post_id"])
     op.create_index("ix_comments_parent_id", "comments", ["parent_id"])
-    op.create_index("ix_comments_post_id_created_at", "comments", ["post_id", "created_at"])
-    op.create_index("ix_comments_user_id_created_at", "comments", ["user_id", "created_at"])
-    op.create_index("ix_comments_parent_id_created_at", "comments", ["parent_id", "created_at"])
+    op.create_index(
+        "ix_comments_post_id_created_at", "comments", ["post_id", "created_at"]
+    )
+    op.create_index(
+        "ix_comments_user_id_created_at", "comments", ["user_id", "created_at"]
+    )
+    op.create_index(
+        "ix_comments_parent_id_created_at", "comments", ["parent_id", "created_at"]
+    )
 
     # ===================
     # Notifications Table
@@ -213,16 +219,24 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["actor_id"], ["users.id"], ondelete="SET NULL"),
     )
-    
+
     # Notifications indexes
     op.create_index("ix_notifications_id", "notifications", ["id"])
     op.create_index("ix_notifications_user_id", "notifications", ["user_id"])
     op.create_index("ix_notifications_actor_id", "notifications", ["actor_id"])
     op.create_index("ix_notifications_type", "notifications", ["type"])
     op.create_index("ix_notifications_read", "notifications", ["read"])
-    op.create_index("ix_notifications_user_id_created_at", "notifications", ["user_id", "created_at"])
-    op.create_index("ix_notifications_user_id_read", "notifications", ["user_id", "read"])
-    op.create_index("ix_notifications_user_id_type", "notifications", ["user_id", "type"])
+    op.create_index(
+        "ix_notifications_user_id_created_at",
+        "notifications",
+        ["user_id", "created_at"],
+    )
+    op.create_index(
+        "ix_notifications_user_id_read", "notifications", ["user_id", "read"]
+    )
+    op.create_index(
+        "ix_notifications_user_id_type", "notifications", ["user_id", "type"]
+    )
 
     # ===================
     # Followers Association Table
@@ -242,7 +256,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["follower_id"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["followed_id"], ["users.id"], ondelete="CASCADE"),
     )
-    
+
     # Followers indexes
     op.create_index("ix_followers_follower_id", "followers", ["follower_id"])
     op.create_index("ix_followers_followed_id", "followers", ["followed_id"])
@@ -266,7 +280,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["post_id"], ["posts.id"], ondelete="CASCADE"),
     )
-    
+
     # Post likes indexes
     op.create_index("ix_post_likes_user_id", "post_likes", ["user_id"])
     op.create_index("ix_post_likes_post_id", "post_likes", ["post_id"])
@@ -282,4 +296,3 @@ def downgrade() -> None:
     op.drop_table("comments")
     op.drop_table("posts")
     op.drop_table("users")
-

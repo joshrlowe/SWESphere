@@ -9,9 +9,7 @@ from app.models.user import User
 
 
 @pytest.mark.asyncio
-async def test_get_user_profile(
-    client: AsyncClient, test_user: dict
-) -> None:
+async def test_get_user_profile(client: AsyncClient, test_user: dict) -> None:
     """Test getting a user's profile."""
     response = await client.get(f"/api/v1/users/{test_user['username']}")
     assert response.status_code == 200
@@ -29,9 +27,7 @@ async def test_get_nonexistent_user(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_update_profile(
-    client: AsyncClient, auth_headers: dict
-) -> None:
+async def test_update_profile(client: AsyncClient, auth_headers: dict) -> None:
     """Test updating user profile."""
     response = await client.patch(
         "/api/v1/users/me",
@@ -104,25 +100,16 @@ async def test_unfollow_user(
 
 
 @pytest.mark.asyncio
-async def test_get_followers(
-    client: AsyncClient, test_user: dict
-) -> None:
+async def test_get_followers(client: AsyncClient, test_user: dict) -> None:
     """Test getting user's followers."""
-    response = await client.get(
-        f"/api/v1/users/{test_user['username']}/followers"
-    )
+    response = await client.get(f"/api/v1/users/{test_user['username']}/followers")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 @pytest.mark.asyncio
-async def test_get_following(
-    client: AsyncClient, test_user: dict
-) -> None:
+async def test_get_following(client: AsyncClient, test_user: dict) -> None:
     """Test getting users that user follows."""
-    response = await client.get(
-        f"/api/v1/users/{test_user['username']}/following"
-    )
+    response = await client.get(f"/api/v1/users/{test_user['username']}/following")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
-

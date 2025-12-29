@@ -104,4 +104,3 @@ def broadcast_to_followers(
     count = 0
     logger.info(f"Broadcast completed: {count} notifications sent")
     return count
-

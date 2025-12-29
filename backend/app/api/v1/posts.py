@@ -20,6 +20,7 @@ router = APIRouter()
 # Response Building Helpers
 # =============================================================================
 
+
 async def _build_post_response(
     post: Post,
     post_service: PostSvc,
@@ -27,22 +28,22 @@ async def _build_post_response(
 ) -> PostResponse:
     """
     Build a PostResponse with computed fields like is_liked.
-    
+
     Args:
         post: Post model to convert
         post_service: Service for checking like status
         current_user: Current user (optional) for personalization
-        
+
     Returns:
         PostResponse with all computed fields populated
     """
     response = PostResponse.model_validate(post)
-    
+
     if current_user:
         response.is_liked = await post_service.is_liked(current_user.id, post.id)
     else:
         response.is_liked = False
-    
+
     return response
 
 
@@ -53,24 +54,24 @@ async def _build_post_list_response(
 ) -> list[PostResponse]:
     """
     Build a list of PostResponses with computed fields.
-    
+
     Args:
         posts: List of Post models
         post_service: Service for checking like status
         current_user: Current user (optional) for personalization
-        
+
     Returns:
         List of PostResponses
     """
     return [
-        await _build_post_response(post, post_service, current_user)
-        for post in posts
+        await _build_post_response(post, post_service, current_user) for post in posts
     ]
 
 
 # =============================================================================
 # Post CRUD Endpoints
 # =============================================================================
+
 
 @router.post(
     "/",
@@ -143,6 +144,7 @@ async def delete_post(
 # Feed & Discovery Endpoints
 # =============================================================================
 
+
 @router.get(
     "/feed",
     response_model=list[PostResponse],
@@ -212,6 +214,7 @@ async def get_replies(
 # =============================================================================
 # Like Endpoints
 # =============================================================================
+
 
 @router.post(
     "/{post_id}/like",

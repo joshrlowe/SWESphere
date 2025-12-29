@@ -139,4 +139,3 @@ async def search_users(
     """
     users = await user_service.search_users(q, skip=skip, limit=limit)
     return [UserPublic.model_validate(u) for u in users]
-

@@ -36,10 +36,10 @@ class PostRepository(BaseRepository[Post]):
     async def get_with_author(self, post_id: int) -> Post | None:
         """
         Get post with author relationship eagerly loaded.
-        
+
         Args:
             post_id: Post ID
-            
+
         Returns:
             Post with author loaded, or None if not found
         """
@@ -55,10 +55,10 @@ class PostRepository(BaseRepository[Post]):
     async def get_with_relationships(self, post_id: int) -> Post | None:
         """
         Get post with all relationships eagerly loaded.
-        
+
         Args:
             post_id: Post ID
-            
+
         Returns:
             Post with author, comments, liked_by loaded
         """
@@ -88,28 +88,30 @@ class PostRepository(BaseRepository[Post]):
     ) -> tuple[Sequence[Post], int]:
         """
         Get personalized home feed for a user.
-        
+
         Includes posts from:
         - Users the current user follows
         - The user's own posts
-        
+
         Args:
             user_id: Current user's ID
             following_ids: List of user IDs being followed
             skip: Pagination offset
             limit: Maximum results
-            
+
         Returns:
             Tuple of (posts, total_count)
         """
         logger.debug(f"Generating home feed for user_id={user_id}")
-        
+
         # Include own posts and posts from followed users
         author_ids = following_ids + [user_id]
-        
+
         # Base condition
-        condition = Post.user_id.in_(author_ids) if author_ids else Post.user_id == user_id
-        
+        condition = (
+            Post.user_id.in_(author_ids) if author_ids else Post.user_id == user_id
+        )
+
         # Get total count
         count_result = await self.db.execute(
             select(func.count())
@@ -118,7 +120,7 @@ class PostRepository(BaseRepository[Post]):
             .where(Post.deleted_at.is_(None))
         )
         total = count_result.scalar() or 0
-        
+
         # Get paginated posts
         result = await self.db.execute(
             select(Post)
@@ -129,7 +131,7 @@ class PostRepository(BaseRepository[Post]):
             .offset(skip)
             .limit(limit)
         )
-        
+
         return result.scalars().all(), total
 
     async def get_explore_feed(
@@ -140,27 +142,25 @@ class PostRepository(BaseRepository[Post]):
     ) -> tuple[Sequence[Post], int]:
         """
         Get explore/discovery feed (public posts).
-        
+
         Returns recent posts from all users, sorted by recency.
         Could be enhanced with trending algorithms.
-        
+
         Args:
             skip: Pagination offset
             limit: Maximum results
-            
+
         Returns:
             Tuple of (posts, total_count)
         """
         logger.debug("Generating explore feed")
-        
+
         # Get total count
         count_result = await self.db.execute(
-            select(func.count())
-            .select_from(Post)
-            .where(Post.deleted_at.is_(None))
+            select(func.count()).select_from(Post).where(Post.deleted_at.is_(None))
         )
         total = count_result.scalar() or 0
-        
+
         # Get paginated posts
         result = await self.db.execute(
             select(Post)
@@ -170,7 +170,7 @@ class PostRepository(BaseRepository[Post]):
             .offset(skip)
             .limit(limit)
         )
-        
+
         return result.scalars().all(), total
 
     async def get_user_posts(
@@ -182,17 +182,17 @@ class PostRepository(BaseRepository[Post]):
     ) -> tuple[Sequence[Post], int]:
         """
         Get all posts by a specific user.
-        
+
         Args:
             user_id: User whose posts to fetch
             skip: Pagination offset
             limit: Maximum results
-            
+
         Returns:
             Tuple of (posts, total_count)
         """
         logger.debug(f"Fetching posts for user_id={user_id}")
-        
+
         # Get total count
         count_result = await self.db.execute(
             select(func.count())
@@ -201,7 +201,7 @@ class PostRepository(BaseRepository[Post]):
             .where(Post.deleted_at.is_(None))
         )
         total = count_result.scalar() or 0
-        
+
         # Get paginated posts
         result = await self.db.execute(
             select(Post)
@@ -212,7 +212,7 @@ class PostRepository(BaseRepository[Post]):
             .offset(skip)
             .limit(limit)
         )
-        
+
         return result.scalars().all(), total
 
     # =========================================================================
@@ -222,11 +222,11 @@ class PostRepository(BaseRepository[Post]):
     async def like_post(self, user_id: int, post_id: int) -> bool:
         """
         Add a like to a post.
-        
+
         Args:
             user_id: User liking the post
             post_id: Post being liked
-            
+
         Returns:
             True if like was added, False if already liked
         """
@@ -238,14 +238,14 @@ class PostRepository(BaseRepository[Post]):
         await self.db.execute(
             insert(post_likes).values(user_id=user_id, post_id=post_id)
         )
-        
+
         # Update denormalized count
         await self.db.execute(
             Post.__table__.update()
             .where(Post.id == post_id)
             .values(likes_count=Post.likes_count + 1)
         )
-        
+
         await self.db.flush()
         logger.info(f"User {user_id} liked post {post_id}")
         return True
@@ -253,11 +253,11 @@ class PostRepository(BaseRepository[Post]):
     async def unlike_post(self, user_id: int, post_id: int) -> bool:
         """
         Remove a like from a post.
-        
+
         Args:
             user_id: User unliking the post
             post_id: Post being unliked
-            
+
         Returns:
             True if like was removed, False if wasn't liked
         """
@@ -267,7 +267,7 @@ class PostRepository(BaseRepository[Post]):
                 post_likes.c.post_id == post_id,
             )
         )
-        
+
         if result.rowcount > 0:
             # Update denormalized count (using CASE for SQLite compatibility)
             await self.db.execute(
@@ -275,25 +275,24 @@ class PostRepository(BaseRepository[Post]):
                 .where(Post.id == post_id)
                 .values(
                     likes_count=case(
-                        (Post.likes_count > 0, Post.likes_count - 1),
-                        else_=0
+                        (Post.likes_count > 0, Post.likes_count - 1), else_=0
                     )
                 )
             )
             await self.db.flush()
             logger.info(f"User {user_id} unliked post {post_id}")
             return True
-        
+
         return False
 
     async def is_liked_by(self, post_id: int, user_id: int) -> bool:
         """
         Check if a post is liked by a specific user.
-        
+
         Args:
             post_id: Post to check
             user_id: User to check
-            
+
         Returns:
             True if user has liked the post
         """
@@ -317,28 +316,27 @@ class PostRepository(BaseRepository[Post]):
         return result.scalar() or 0
 
     async def get_liked_post_ids(
-        self, 
-        user_id: int, 
+        self,
+        user_id: int,
         post_ids: list[int],
     ) -> set[int]:
         """
         Get which posts from a list are liked by a user.
-        
+
         Useful for batch-checking likes when displaying a feed.
-        
+
         Args:
             user_id: User to check likes for
             post_ids: List of post IDs to check
-            
+
         Returns:
             Set of post IDs that the user has liked
         """
         if not post_ids:
             return set()
-        
+
         result = await self.db.execute(
-            select(post_likes.c.post_id)
-            .where(
+            select(post_likes.c.post_id).where(
                 post_likes.c.user_id == user_id,
                 post_likes.c.post_id.in_(post_ids),
             )
@@ -358,17 +356,17 @@ class PostRepository(BaseRepository[Post]):
     ) -> tuple[Sequence[Post], int]:
         """
         Get replies to a specific post.
-        
+
         Args:
             post_id: Parent post ID
             skip: Pagination offset
             limit: Maximum results
-            
+
         Returns:
             Tuple of (replies, total_count)
         """
         logger.debug(f"Fetching replies to post_id={post_id}")
-        
+
         # Get total count
         count_result = await self.db.execute(
             select(func.count())
@@ -377,7 +375,7 @@ class PostRepository(BaseRepository[Post]):
             .where(Post.deleted_at.is_(None))
         )
         total = count_result.scalar() or 0
-        
+
         # Get paginated replies
         result = await self.db.execute(
             select(Post)
@@ -388,7 +386,7 @@ class PostRepository(BaseRepository[Post]):
             .offset(skip)
             .limit(limit)
         )
-        
+
         return result.scalars().all(), total
 
     # =========================================================================
@@ -404,18 +402,18 @@ class PostRepository(BaseRepository[Post]):
     ) -> tuple[Sequence[Post], int]:
         """
         Search posts by content.
-        
+
         Args:
             query: Search term
             skip: Pagination offset
             limit: Maximum results
-            
+
         Returns:
             Tuple of (posts, total_count)
         """
         logger.debug(f"Searching posts with query: {query}")
         search_pattern = f"%{query}%"
-        
+
         # Get total count
         count_result = await self.db.execute(
             select(func.count())
@@ -424,7 +422,7 @@ class PostRepository(BaseRepository[Post]):
             .where(Post.deleted_at.is_(None))
         )
         total = count_result.scalar() or 0
-        
+
         # Get paginated results
         result = await self.db.execute(
             select(Post)
@@ -435,13 +433,13 @@ class PostRepository(BaseRepository[Post]):
             .offset(skip)
             .limit(limit)
         )
-        
+
         return result.scalars().all(), total
 
     # =========================================================================
     # Legacy Aliases (for backwards compatibility)
     # =========================================================================
-    
+
     async def get_feed(
         self,
         user_id: int,
@@ -452,12 +450,14 @@ class PostRepository(BaseRepository[Post]):
         """Legacy method - use get_home_feed instead."""
         # Get following IDs
         from app.models import followers as followers_table
+
         result = await self.db.execute(
-            select(followers_table.c.followed_id)
-            .where(followers_table.c.follower_id == user_id)
+            select(followers_table.c.followed_id).where(
+                followers_table.c.follower_id == user_id
+            )
         )
         following_ids = [row[0] for row in result.fetchall()]
-        
+
         posts, _ = await self.get_home_feed(
             user_id, following_ids, skip=skip, limit=limit
         )

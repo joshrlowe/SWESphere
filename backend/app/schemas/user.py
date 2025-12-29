@@ -33,6 +33,9 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """Schema for updating user profile."""
 
+    username: str | None = Field(
+        None, min_length=3, max_length=64, pattern=r"^[a-zA-Z0-9_]+$"
+    )
     display_name: str | None = Field(None, max_length=100)
     bio: str | None = Field(None, max_length=500)
     location: str | None = Field(None, max_length=100)
@@ -96,4 +99,3 @@ class UserMinimal(BaseModel):
     is_verified: bool
 
     model_config = {"from_attributes": True}
-

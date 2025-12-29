@@ -1,4 +1,5 @@
 """Structured logging configuration for SWESphere."""
+
 import json
 import logging
 import sys
@@ -37,6 +38,7 @@ class JSONFormatter(logging.Formatter):
             # Add user info if authenticated
             try:
                 from flask_login import current_user
+
                 if current_user.is_authenticated:
                     log_data["user"] = {
                         "id": current_user.id,
@@ -89,6 +91,7 @@ def setup_logging(app):
 
     # File handler (rotating)
     import os
+
     if not os.path.exists("logs"):
         os.mkdir("logs")
 
@@ -117,9 +120,9 @@ def setup_logging(app):
     app.logger.setLevel(logging.DEBUG if app.debug else logging.INFO)
 
     # Log startup
-    app.logger.info("SWESphere logging initialized", extra={
-        "extra_data": {"debug_mode": app.debug}
-    })
+    app.logger.info(
+        "SWESphere logging initialized", extra={"extra_data": {"debug_mode": app.debug}}
+    )
 
 
 def generate_request_id():
@@ -129,6 +132,7 @@ def generate_request_id():
 
 def log_request(logger):
     """Decorator to log request start and end."""
+
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -140,7 +144,9 @@ def log_request(logger):
             except Exception as e:
                 logger.exception(f"Request failed: {f.__name__}")
                 raise
+
         return wrapper
+
     return decorator
 
 
@@ -154,6 +160,7 @@ class AuditLogger:
         # Audit log file
         if not app.debug:
             import os
+
             if not os.path.exists("logs"):
                 os.mkdir("logs")
 
@@ -165,45 +172,59 @@ class AuditLogger:
             handler.setFormatter(JSONFormatter())
             self.logger.addHandler(handler)
 
-    def log_login_attempt(self, username: str, success: bool, ip: str, reason: str = None):
+    def log_login_attempt(
+        self, username: str, success: bool, ip: str, reason: str = None
+    ):
         """Log login attempt."""
-        self.logger.info("Login attempt", extra={
-            "extra_data": {
-                "event": "login_attempt",
-                "username": username,
-                "success": success,
-                "ip_address": ip,
-                "reason": reason,
-            }
-        })
+        self.logger.info(
+            "Login attempt",
+            extra={
+                "extra_data": {
+                    "event": "login_attempt",
+                    "username": username,
+                    "success": success,
+                    "ip_address": ip,
+                    "reason": reason,
+                }
+            },
+        )
 
     def log_password_reset(self, email: str, ip: str):
         """Log password reset request."""
-        self.logger.info("Password reset requested", extra={
-            "extra_data": {
-                "event": "password_reset_request",
-                "email": email,
-                "ip_address": ip,
-            }
-        })
+        self.logger.info(
+            "Password reset requested",
+            extra={
+                "extra_data": {
+                    "event": "password_reset_request",
+                    "email": email,
+                    "ip_address": ip,
+                }
+            },
+        )
 
     def log_account_lockout(self, username: str, ip: str):
         """Log account lockout."""
-        self.logger.warning("Account locked out", extra={
-            "extra_data": {
-                "event": "account_lockout",
-                "username": username,
-                "ip_address": ip,
-            }
-        })
+        self.logger.warning(
+            "Account locked out",
+            extra={
+                "extra_data": {
+                    "event": "account_lockout",
+                    "username": username,
+                    "ip_address": ip,
+                }
+            },
+        )
 
     def log_registration(self, username: str, email: str, ip: str):
         """Log new registration."""
-        self.logger.info("New user registration", extra={
-            "extra_data": {
-                "event": "registration",
-                "username": username,
-                "email": email,
-                "ip_address": ip,
-            }
-        })
+        self.logger.info(
+            "New user registration",
+            extra={
+                "extra_data": {
+                    "event": "registration",
+                    "username": username,
+                    "email": email,
+                    "ip_address": ip,
+                }
+            },
+        )

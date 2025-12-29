@@ -30,10 +30,11 @@ from app.services.user_service import UserService
 # Database Dependencies
 # =============================================================================
 
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Provide a database session for request handling.
-    
+
     The session is automatically committed on success or rolled back on error.
     """
     async for session in get_async_session():
@@ -47,15 +48,16 @@ DBSession = Annotated[AsyncSession, Depends(get_db)]
 # Redis Dependencies
 # =============================================================================
 
+
 class RedisManager:
     """
     Manages Redis client lifecycle.
-    
+
     Provides lazy initialization and proper cleanup of Redis connections.
     """
-    
+
     _client: Redis | None = None
-    
+
     @classmethod
     async def get_client(cls) -> Redis:
         """Get or create the Redis client."""
@@ -65,7 +67,7 @@ class RedisManager:
                 decode_responses=True,
             )
         return cls._client
-    
+
     @classmethod
     async def close(cls) -> None:
         """Close the Redis connection if open."""
@@ -91,6 +93,7 @@ RedisClient = Annotated[Redis, Depends(get_redis)]
 # Repository Dependencies
 # =============================================================================
 
+
 def get_user_repository(db: DBSession) -> UserRepository:
     """Provide UserRepository instance."""
     return UserRepository(db)
@@ -108,6 +111,7 @@ PostRepo = Annotated[PostRepository, Depends(get_post_repository)]
 # =============================================================================
 # Service Dependencies
 # =============================================================================
+
 
 def get_auth_service(user_repo: UserRepo, redis: RedisClient) -> AuthService:
     """Provide AuthService instance."""

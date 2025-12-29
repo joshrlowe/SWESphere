@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def create_engine() -> AsyncEngine:
     """
     Create async SQLAlchemy engine with optimized settings.
-    
+
     Uses asyncpg driver for PostgreSQL with connection pooling.
     """
     engine = create_async_engine(
@@ -35,12 +35,10 @@ def create_engine() -> AsyncEngine:
         max_overflow=settings.DATABASE_MAX_OVERFLOW,
         pool_timeout=settings.DATABASE_POOL_TIMEOUT,
         pool_pre_ping=True,  # Verify connections before use
-        pool_recycle=3600,   # Recycle connections after 1 hour
-        
+        pool_recycle=3600,  # Recycle connections after 1 hour
         # Query logging
         echo=settings.DATABASE_ECHO,
         echo_pool=settings.DEBUG,
-        
         # Connection arguments for asyncpg
         connect_args={
             "server_settings": {
@@ -53,8 +51,11 @@ def create_engine() -> AsyncEngine:
 
     # Log pool events in debug mode
     if settings.DEBUG:
+
         @event.listens_for(engine.sync_engine, "checkout")
-        def receive_checkout(dbapi_connection: Any, connection_record: Any, connection_proxy: Any) -> None:
+        def receive_checkout(
+            dbapi_connection: Any, connection_record: Any, connection_proxy: Any
+        ) -> None:
             logger.debug("Connection checked out from pool")
 
         @event.listens_for(engine.sync_engine, "checkin")
@@ -81,10 +82,10 @@ async_session_factory = async_sessionmaker(
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency to get async database session.
-    
+
     Provides a session with automatic commit/rollback handling.
     Use with FastAPI's Depends():
-    
+
     ```python
     @router.get("/users")
     async def get_users(db: AsyncSession = Depends(get_async_session)):
@@ -111,9 +112,9 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Context manager for database sessions.
-    
+
     Use when you need a session outside of FastAPI dependency injection:
-    
+
     ```python
     async with get_session() as session:
         result = await session.execute(query)
@@ -134,7 +135,7 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 async def check_database_connection() -> bool:
     """
     Check if database is reachable.
-    
+
     Returns:
         True if connection successful, False otherwise
     """
@@ -150,7 +151,7 @@ async def check_database_connection() -> bool:
 async def get_pool_status() -> dict[str, Any]:
     """
     Get current connection pool status.
-    
+
     Returns:
         Dictionary with pool statistics
     """
@@ -167,7 +168,7 @@ async def get_pool_status() -> dict[str, Any]:
 async def dispose_engine() -> None:
     """
     Dispose of the engine and all connections.
-    
+
     Call during application shutdown.
     """
     await engine.dispose()

@@ -5,9 +5,7 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_post(
-    client: AsyncClient, auth_headers: dict
-) -> None:
+async def test_create_post(client: AsyncClient, auth_headers: dict) -> None:
     """Test creating a post."""
     response = await client.post(
         "/api/v1/posts/",
@@ -21,9 +19,7 @@ async def test_create_post(
 
 
 @pytest.mark.asyncio
-async def test_create_post_too_long(
-    client: AsyncClient, auth_headers: dict
-) -> None:
+async def test_create_post_too_long(client: AsyncClient, auth_headers: dict) -> None:
     """Test creating a post that's too long."""
     response = await client.post(
         "/api/v1/posts/",
@@ -157,4 +153,3 @@ async def test_unlike_post(client: AsyncClient, auth_headers: dict) -> None:
     )
     assert get_response.json()["is_liked"] is False
     assert get_response.json()["likes_count"] == 0
-

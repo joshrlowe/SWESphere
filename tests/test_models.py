@@ -1,4 +1,5 @@
 """Tests for database models."""
+
 from datetime import datetime, timezone, timedelta
 import pytest
 from app import db
@@ -126,7 +127,10 @@ class TestPostModel:
     def test_following_posts(self, sample_users, app):
         """Test getting posts from followed users."""
         with app.app_context():
-            users = [db.session.query(User).filter_by(username=f"user{i}").first() for i in range(3)]
+            users = [
+                db.session.query(User).filter_by(username=f"user{i}").first()
+                for i in range(3)
+            ]
 
             # Create posts
             now = datetime.now(timezone.utc)
@@ -135,7 +139,7 @@ class TestPostModel:
                 post = Post(
                     body=f"Post from {user.username}",
                     author=user,
-                    timestamp=now + timedelta(seconds=i)
+                    timestamp=now + timedelta(seconds=i),
                 )
                 db.session.add(post)
                 posts.append(post)

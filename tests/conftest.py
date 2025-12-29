@@ -1,4 +1,5 @@
 """Pytest configuration and fixtures."""
+
 import os
 import pytest
 
@@ -14,12 +15,14 @@ from app.models import User, Post
 @pytest.fixture
 def app():
     """Create application for testing."""
-    flask_app.config.update({
-        "TESTING": True,
-        "WTF_CSRF_ENABLED": False,
-        "SQLALCHEMY_DATABASE_URI": "sqlite://",
-        "RATELIMIT_ENABLED": False,
-    })
+    flask_app.config.update(
+        {
+            "TESTING": True,
+            "WTF_CSRF_ENABLED": False,
+            "SQLALCHEMY_DATABASE_URI": "sqlite://",
+            "RATELIMIT_ENABLED": False,
+        }
+    )
 
     with flask_app.app_context():
         db.create_all()

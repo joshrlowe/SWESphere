@@ -17,7 +17,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
-    
+
     Environment variables can be set directly or via a .env file.
     All settings have sensible defaults for development.
     """
@@ -52,12 +52,16 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
+
     # Password requirements
     PASSWORD_MIN_LENGTH: int = 8
     PASSWORD_REQUIRE_UPPERCASE: bool = True
     PASSWORD_REQUIRE_LOWERCASE: bool = True
     PASSWORD_REQUIRE_DIGIT: bool = True
+
+    # Account lockout
+    MAX_LOGIN_ATTEMPTS: int = 5
+    LOCKOUT_DURATION_MINUTES: int = 15
 
     # ===================
     # Database (PostgreSQL)
@@ -88,13 +92,13 @@ class Settings(BaseSettings):
     # CORS
     # ===================
     CORS_ORIGINS: list[str] = [
-        "http://localhost:3000",      # SvelteKit default
-        "http://localhost:5173",      # Vite/SvelteKit dev
-        "http://localhost:4173",      # Vite preview
+        "http://localhost:3000",  # SvelteKit default
+        "http://localhost:5173",  # Vite/SvelteKit dev
+        "http://localhost:4173",  # Vite preview
         "http://127.0.0.1:5173",
-        "capacitor://localhost",      # Mobile (Capacitor)
-        "ionic://localhost",          # Mobile (Ionic)
-        "http://localhost",           # Flutter web
+        "capacitor://localhost",  # Mobile (Capacitor)
+        "ionic://localhost",  # Mobile (Ionic)
+        "http://localhost",  # Flutter web
     ]
 
     @field_validator("CORS_ORIGINS", mode="before")
@@ -103,6 +107,7 @@ class Settings(BaseSettings):
         """Parse CORS origins from JSON string or list."""
         if isinstance(v, str):
             import json
+
             try:
                 return json.loads(v)
             except json.JSONDecodeError:
@@ -123,7 +128,12 @@ class Settings(BaseSettings):
     # ===================
     MAX_UPLOAD_SIZE: int = 5 * 1024 * 1024  # 5MB
     UPLOAD_DIR: Path = Path("uploads")
-    ALLOWED_IMAGE_TYPES: list[str] = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    ALLOWED_IMAGE_TYPES: list[str] = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+    ]
     AVATAR_MAX_SIZE: int = 2 * 1024 * 1024  # 2MB
 
     # ===================
@@ -194,11 +204,11 @@ class Settings(BaseSettings):
                     "SECRET_KEY must be changed in production! "
                     "Use: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
                 )
-            
+
             # Ensure debug is off
             if self.DEBUG:
                 raise ValueError("DEBUG must be False in production")
-        
+
         return self
 
     @field_validator("UPLOAD_DIR", mode="after")
@@ -215,7 +225,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """
     Get cached settings instance.
-    
+
     Uses lru_cache to ensure settings are only loaded once.
     """
     return Settings()

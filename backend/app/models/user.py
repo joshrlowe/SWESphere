@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 class User(Base, BaseModelMixin, SoftDeleteMixin):
     """
     User model for authentication and user profiles.
-    
+
     Attributes:
         id: Primary key
         username: Unique username (3-64 chars, alphanumeric + underscore)
@@ -33,16 +33,16 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
         avatar_url: Custom avatar URL (if not using Gravatar)
         location: User location
         website: User website URL
-        
+
         is_active: Whether account is active
         is_verified: Whether user is verified (blue check)
         is_superuser: Whether user has admin privileges
         email_verified: Whether email has been verified
-        
+
         failed_login_attempts: Count of failed login attempts
         locked_until: Account lockout expiry time
         last_login: Last successful login timestamp
-    
+
     Relationships:
         posts: User's posts
         comments: User's comments
@@ -233,7 +233,7 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     def set_password(self, password: str) -> None:
         """
         Hash and set the user's password.
-        
+
         Args:
             password: Plain text password to hash
         """
@@ -242,10 +242,10 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     def check_password(self, password: str) -> bool:
         """
         Verify a password against the stored hash.
-        
+
         Args:
             password: Plain text password to verify
-            
+
         Returns:
             True if password matches, False otherwise
         """
@@ -258,9 +258,9 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     def avatar(self) -> str:
         """
         Get the user's avatar URL.
-        
+
         Returns custom avatar if set, otherwise Gravatar.
-        
+
         Returns:
             Avatar URL
         """
@@ -271,25 +271,24 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     def gravatar_url(self, size: int = 128) -> str:
         """
         Generate Gravatar URL from email.
-        
+
         Args:
             size: Avatar size in pixels
-            
+
         Returns:
             Gravatar URL
         """
-        email_hash = hashlib.md5(
-            self.email.lower().encode("utf-8")
-        ).hexdigest()
+        email_hash = hashlib.md5(self.email.lower().encode("utf-8")).hexdigest()
         return f"https://www.gravatar.com/avatar/{email_hash}?d=identicon&s={size}"
 
     # ===================
     # Account Lockout
     # ===================
+    @property
     def is_locked(self) -> bool:
         """
         Check if the account is currently locked.
-        
+
         Returns:
             True if account is locked
         """
@@ -300,12 +299,12 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     def record_failed_login(self) -> None:
         """
         Record a failed login attempt.
-        
+
         Locks account after 5 failed attempts for 15 minutes.
         Progressive lockout: duration doubles with each lockout.
         """
         self.failed_login_attempts += 1
-        
+
         if self.failed_login_attempts >= 5:
             # Calculate lockout duration (15 min * 2^(lockouts-1))
             lockout_count = (self.failed_login_attempts - 5) // 5 + 1
@@ -326,10 +325,10 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     def is_following(self, user: "User") -> bool:
         """
         Check if this user is following another user.
-        
+
         Args:
             user: User to check
-            
+
         Returns:
             True if following
         """
@@ -338,10 +337,10 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     def follow(self, user: "User") -> bool:
         """
         Follow another user.
-        
+
         Args:
             user: User to follow
-            
+
         Returns:
             True if successfully followed (wasn't already following)
         """
@@ -357,10 +356,10 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     def unfollow(self, user: "User") -> bool:
         """
         Unfollow a user.
-        
+
         Args:
             user: User to unfollow
-            
+
         Returns:
             True if successfully unfollowed (was following)
         """
@@ -381,11 +380,11 @@ class User(Base, BaseModelMixin, SoftDeleteMixin):
     ) -> dict[str, Any]:
         """
         Convert user to dictionary for API responses.
-        
+
         Args:
             include_email: Include email in response
             include_private: Include private fields
-            
+
         Returns:
             Dictionary representation
         """
