@@ -175,8 +175,7 @@ class Post(Base, BaseModelMixin, SoftDeleteMixin):
         Index("ix_posts_created_at_likes", "created_at", "likes_count"),
         # For feed queries
         Index("ix_posts_created_at", "created_at"),
-        # For finding replies
-        Index("ix_posts_reply_to_id", "reply_to_id"),
+        # Note: reply_to_id and repost_of_id already have index=True on their columns
     )
 
     # ===================
