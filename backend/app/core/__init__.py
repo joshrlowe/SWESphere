@@ -6,6 +6,7 @@ Exports:
 - Event handlers (startup/shutdown)
 - Redis key management
 - Pagination utilities
+- WebSocket connection management
 """
 
 from app.core.pagination import (
@@ -28,6 +29,14 @@ from app.core.security import (
     TokenBlacklist,
     blacklist_token,
     is_token_blacklisted,
+)
+from app.core.websocket import (
+    ConnectionManager,
+    MessageType,
+    connection_manager,
+    build_message,
+    build_notification_message,
+    build_unread_count_message,
 )
 
 __all__ = [
@@ -54,4 +63,11 @@ __all__ = [
     "TokenBlacklist",
     "blacklist_token",
     "is_token_blacklisted",
+    # WebSocket
+    "ConnectionManager",
+    "MessageType",
+    "connection_manager",
+    "build_message",
+    "build_notification_message",
+    "build_unread_count_message",
 ]

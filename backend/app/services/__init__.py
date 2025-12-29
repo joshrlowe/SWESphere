@@ -6,6 +6,7 @@ Services handle:
 - Coordination between repositories
 - External service integration
 - Caching logic
+- Real-time notifications
 """
 
 from app.core.pagination import PaginatedResult
@@ -15,6 +16,7 @@ from app.services.notification_service import (
     PaginatedNotifications,
 )
 from app.services.post_service import PostService
+from app.services.realtime_service import RealtimeService, realtime_service
 from app.services.user_service import UserService
 
 __all__ = [
@@ -23,6 +25,8 @@ __all__ = [
     "UserService",
     "PostService",
     "NotificationService",
+    "RealtimeService",
+    "realtime_service",
     # Pagination (consolidated)
     "PaginatedResult",
     "PaginatedNotifications",

@@ -1,12 +1,14 @@
 """Pytest configuration and fixtures."""
 
 import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
@@ -17,21 +19,6 @@ from app.dependencies import get_db, get_redis
 
 # Test database URL (in-memory SQLite)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-# Create test engine
-test_engine = create_async_engine(
-    TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-
-# Create test session factory
-TestSessionLocal = async_sessionmaker(
-    test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False,
-)
 
 
 # =============================================================================
@@ -72,14 +59,6 @@ def mock_validate_password_strength(password: str) -> tuple[bool, list[str]]:
 # =============================================================================
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create event loop for tests."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture(autouse=True)
 def mock_password_security():
     """Mock password hashing for all tests."""
@@ -112,36 +91,101 @@ def mock_redis():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def db_session(mock_redis) -> AsyncGenerator[AsyncSession, None]:
-    """Create a fresh database session for each test."""
-    # Create all tables
-    async with test_engine.begin() as conn:
+async def db_engine():
+    """Create and dispose async engine for each test."""
+    engine = create_async_engine(
+        TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,  # StaticPool keeps the same connection for in-memory SQLite
+    )
+    
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    async with TestSessionLocal() as session:
-        yield session
-
-    # Drop all tables after test
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    
+    try:
+        yield engine
+    finally:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await engine.dispose()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client(db_session: AsyncSession, mock_redis) -> AsyncGenerator[AsyncClient, None]:
-    """Create test client with database override."""
-    from app.main import create_app
+async def db_session(db_engine, mock_redis) -> AsyncGenerator[AsyncSession, None]:
+    """Create a fresh database session for each test."""
+    async_session_factory = async_sessionmaker(
+        bind=db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
+    
+    async with async_session_factory() as session:
+        try:
+            yield session
+        finally:
+            await session.rollback()
 
-    test_app = create_app()
+
+def create_test_app() -> FastAPI:
+    """
+    Create a FastAPI app for testing without background tasks.
+    
+    This avoids the WebSocket listener infinite loop issue.
+    """
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import ORJSONResponse
+    
+    from app.api.router import api_router
+    from app.config import settings
+    
+    # Create a minimal lifespan that doesn't start background tasks
+    @asynccontextmanager
+    async def test_lifespan(app: FastAPI):
+        # Skip WebSocket manager startup during tests
+        yield
+    
+    app = FastAPI(
+        title="SWESphere Test",
+        default_response_class=ORJSONResponse,
+        lifespan=test_lifespan,
+    )
+    
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+    
+    return app
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client(db_engine, db_session: AsyncSession, mock_redis) -> AsyncGenerator[AsyncClient, None]:
+    """Create test client with database override."""
+    # Create session factory bound to this test's engine
+    async_session_factory = async_sessionmaker(
+        bind=db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
+    
+    # Use test app without background tasks
+    test_app = create_test_app()
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
-        try:
-            yield db_session
-            await db_session.commit()
-            # Expire all to ensure next request gets fresh data
-            db_session.expire_all()
-        except Exception:
-            await db_session.rollback()
-            raise
+        async with async_session_factory() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
 
     async def override_get_redis():
         return mock_redis
@@ -188,3 +232,51 @@ async def auth_headers(test_user: dict[str, Any]) -> dict[str, str]:
 
     token = create_access_token(subject=test_user["id"])
     return {"Authorization": f"Bearer {token}"}
+
+
+# =============================================================================
+# Session Cleanup Hook
+# =============================================================================
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Clean up any remaining async resources after all tests complete."""
+    # Force close any remaining event loop tasks
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.stop()
+    except RuntimeError:
+        pass
+
+
+# =============================================================================
+# Test Helpers
+# =============================================================================
+
+
+def get_error_message(response_json: dict) -> str:
+    """
+    Extract error message from API response.
+
+    Handles both formats:
+    - FastAPI default: {"detail": "..."}
+    - Wrapped format: {"error": {"message": "..."}}
+
+    Returns lowercase string for easier assertion matching.
+    """
+    # Try FastAPI default format first
+    detail = response_json.get("detail", "")
+    if isinstance(detail, str) and detail:
+        return detail.lower()
+
+    # Try wrapped format
+    error_msg = response_json.get("error", {}).get("message", "")
+    if error_msg:
+        return error_msg.lower()
+
+    # Return detail if it's a list (validation errors)
+    if isinstance(detail, list):
+        return str(detail).lower()
+
+    return ""

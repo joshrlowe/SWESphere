@@ -5,12 +5,15 @@ Provides fixtures for testing FastAPI routes with async SQLite database
 and mocked Redis for isolated, fast testing.
 """
 
-import asyncio
+from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import ORJSONResponse
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
@@ -67,33 +70,24 @@ for p in _patches:
     p.start()
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture(scope="function")
 async def db_engine():
-    """Create async engine for tests."""
+    """Create async engine for tests with proper cleanup."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
         connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=False,
+        poolclass=StaticPool,  # StaticPool keeps the same connection for in-memory SQLite
     )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    yield engine
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-    await engine.dispose()
+    try:
+        yield engine
+    finally:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await engine.dispose()
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -106,7 +100,10 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
     )
 
     async with async_session_factory() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.rollback()
 
 
 @pytest.fixture
@@ -126,17 +123,47 @@ def mock_redis():
     return redis
 
 
+def create_test_app() -> FastAPI:
+    """
+    Create a FastAPI app for testing without background tasks.
+    
+    This avoids the WebSocket listener infinite loop during tests.
+    """
+    from app.api.router import api_router
+    from app.config import settings
+    
+    # Minimal lifespan that doesn't start background tasks
+    @asynccontextmanager
+    async def test_lifespan(app: FastAPI):
+        yield
+    
+    app = FastAPI(
+        title="SWESphere Test",
+        default_response_class=ORJSONResponse,
+        lifespan=test_lifespan,
+    )
+    
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+    
+    return app
+
+
 @pytest_asyncio.fixture
 async def test_app(db_engine, mock_redis):
     """Create FastAPI app with test database."""
-    # Import here to ensure patches are applied
-    from app.main import create_app
-    
     # Clear password store for each test
     _password_store.clear()
     
     # Create test session factory
-    async_session_factory = async_sessionmaker(
+    test_session_factory = async_sessionmaker(
         bind=db_engine,
         class_=AsyncSession,
         expire_on_commit=False,
@@ -144,21 +171,19 @@ async def test_app(db_engine, mock_redis):
     )
 
     async def override_get_db():
-        session = async_session_factory()
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+        async with test_session_factory() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
 
     async def override_get_redis():
         return mock_redis
 
-    # Create app and override dependencies
-    application = create_app()
+    # Create test app without background tasks
+    application = create_test_app()
     application.dependency_overrides[get_db] = override_get_db
     application.dependency_overrides[get_redis] = override_get_redis
 

@@ -55,7 +55,7 @@ async def get_notifications(
         unread_only=unread_only,
     )
     return NotificationListResponse.create(
-        notifications=result.notifications,
+        notifications=result.items,
         total=result.total,
         page=page,
         per_page=per_page,

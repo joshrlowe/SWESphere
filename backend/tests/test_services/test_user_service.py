@@ -172,7 +172,7 @@ async def test_get_followers(user_repo: UserRepository, user_factory):
     result = await service.get_followers(user.id, page=1, per_page=10)
 
     assert result.total == 2
-    assert len(result.users) == 2
+    assert len(result.items) == 2
     assert result.page == 1
 
 
@@ -191,7 +191,7 @@ async def test_get_following(user_repo: UserRepository, user_factory):
     result = await service.get_following(user.id, page=1, per_page=10)
 
     assert result.total == 2
-    assert len(result.users) == 2
+    assert len(result.items) == 2
 
 
 @pytest.mark.asyncio
@@ -206,4 +206,4 @@ async def test_search_users(user_repo: UserRepository, user_factory):
     result = await service.search_users("ali", page=1, per_page=10)
 
     assert result.total == 2
-    assert len(result.users) == 2
+    assert len(result.items) == 2

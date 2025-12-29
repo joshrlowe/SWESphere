@@ -8,6 +8,8 @@ email verification, and password reset endpoints.
 import pytest
 from httpx import AsyncClient
 
+from tests.conftest import get_error_message
+
 
 class TestRegistration:
     """Tests for user registration endpoint."""
@@ -38,7 +40,7 @@ class TestRegistration:
         )
 
         assert response.status_code == 400
-        error_msg = response.json().get("error", {}).get("message", "").lower()
+        error_msg = get_error_message(response.json())
         assert "email" in error_msg
 
     @pytest.mark.asyncio
@@ -56,7 +58,7 @@ class TestRegistration:
         )
 
         assert response.status_code == 400
-        error_msg = response.json().get("error", {}).get("message", "").lower()
+        error_msg = get_error_message(response.json())
         assert "username" in error_msg
 
     @pytest.mark.asyncio
@@ -152,7 +154,7 @@ class TestLogin:
         )
 
         assert response.status_code == 401
-        error_msg = response.json().get("error", {}).get("message", "").lower()
+        error_msg = get_error_message(response.json())
         assert "invalid" in error_msg
 
     @pytest.mark.asyncio

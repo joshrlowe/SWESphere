@@ -7,6 +7,8 @@ Tests profile management, following, followers, and search endpoints.
 import pytest
 from httpx import AsyncClient
 
+from tests.conftest import get_error_message
+
 
 class TestCurrentUserProfile:
     """Tests for current user profile endpoints."""
@@ -74,7 +76,7 @@ class TestCurrentUserProfile:
         )
 
         assert response.status_code == 400
-        error_msg = response.json().get("error", {}).get("message", "").lower()
+        error_msg = get_error_message(response.json())
         assert "username" in error_msg
 
     @pytest.mark.asyncio
@@ -156,7 +158,7 @@ class TestFollowing:
         )
 
         assert response.status_code == 400
-        error_msg = response.json().get("error", {}).get("message", "").lower()
+        error_msg = get_error_message(response.json())
         assert "yourself" in error_msg or "cannot follow" in error_msg
 
     @pytest.mark.asyncio

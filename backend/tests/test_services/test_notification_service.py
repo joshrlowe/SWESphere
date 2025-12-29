@@ -118,7 +118,7 @@ async def test_get_notifications(db_session, mock_redis, user_factory):
     result = await service.get_notifications(user.id, page=1, per_page=10)
 
     assert result.total == 2
-    assert len(result.notifications) == 2
+    assert len(result.items) == 2
     assert result.unread_count == 2
 
 
@@ -152,7 +152,7 @@ async def test_get_notifications_unread_only(db_session, mock_redis, user_factor
     )
 
     assert result.total == 1
-    assert len(result.notifications) == 1
+    assert len(result.items) == 1
 
 
 @pytest.mark.asyncio

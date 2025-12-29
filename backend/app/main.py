@@ -112,6 +112,10 @@ API requests are rate-limited to prevent abuse:
                 "description": "User notification management",
             },
             {
+                "name": "WebSocket",
+                "description": "Real-time communication via WebSocket",
+            },
+            {
                 "name": "Health",
                 "description": "Health check and monitoring endpoints",
             },

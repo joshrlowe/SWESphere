@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, comments, notifications, posts, users
+from app.api.v1 import auth, comments, notifications, posts, users, ws
 
 api_router = APIRouter()
 
@@ -14,3 +14,4 @@ api_router.include_router(comments.router, prefix="/comments", tags=["Comments"]
 api_router.include_router(
     notifications.router, prefix="/notifications", tags=["Notifications"]
 )
+api_router.include_router(ws.router, tags=["WebSocket"])

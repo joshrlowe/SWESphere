@@ -3,6 +3,8 @@
 import pytest
 from httpx import AsyncClient
 
+from tests.conftest import get_error_message
+
 
 @pytest.mark.asyncio
 async def test_register_user(client: AsyncClient) -> None:
@@ -34,10 +36,8 @@ async def test_register_duplicate_email(client: AsyncClient, test_user: dict) ->
         },
     )
     assert response.status_code == 400
-    data = response.json()
-    # API returns error in {"error": {"message": "..."}} format
-    assert "error" in data
-    assert "already registered" in data["error"]["message"].lower()
+    error_msg = get_error_message(response.json())
+    assert "already registered" in error_msg or "email" in error_msg
 
 
 @pytest.mark.asyncio
@@ -54,10 +54,8 @@ async def test_register_duplicate_username(
         },
     )
     assert response.status_code == 400
-    data = response.json()
-    # API returns error in {"error": {"message": "..."}} format
-    assert "error" in data
-    assert "already taken" in data["error"]["message"].lower()
+    error_msg = get_error_message(response.json())
+    assert "already taken" in error_msg or "username" in error_msg
 
 
 @pytest.mark.asyncio

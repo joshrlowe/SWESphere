@@ -211,7 +211,7 @@ async def test_get_explore_feed(
     result = await service.get_explore_feed(page=1, per_page=10)
 
     assert result.total == 3
-    assert len(result.posts) == 3
+    assert len(result.items) == 3
     assert result.page == 1
 
 
@@ -241,7 +241,7 @@ async def test_get_home_feed(
     result = await service.get_home_feed(user.id, page=1, per_page=10)
 
     assert result.total == 2
-    assert len(result.posts) == 2
+    assert len(result.items) == 2
 
 
 @pytest.mark.asyncio
@@ -260,7 +260,7 @@ async def test_search_posts(
     result = await service.search_posts("python", page=1, per_page=10)
 
     assert result.total == 2
-    assert len(result.posts) == 2
+    assert len(result.items) == 2
 
 
 @pytest.mark.asyncio
@@ -283,4 +283,4 @@ async def test_get_user_posts(
     result = await service.get_user_posts(user.id, page=1, per_page=10)
 
     assert result.total == 2
-    assert len(result.posts) == 2
+    assert len(result.items) == 2

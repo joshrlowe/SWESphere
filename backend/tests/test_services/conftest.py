@@ -4,7 +4,6 @@ Test fixtures for service tests.
 Provides mock repositories and Redis for isolated service testing.
 """
 
-import asyncio
 from typing import Any, AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock
 
@@ -25,33 +24,24 @@ from app.repositories.post_repository import PostRepository
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture
 async def db_engine():
-    """Create async engine for tests."""
+    """Create async engine for tests with proper cleanup."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
         connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=False,
+        poolclass=StaticPool,  # StaticPool keeps the same connection for in-memory SQLite
     )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    yield engine
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-    await engine.dispose()
+    try:
+        yield engine
+    finally:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await engine.dispose()
 
 
 @pytest_asyncio.fixture
@@ -64,8 +54,10 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
     )
 
     async with async_session_factory() as session:
-        yield session
-        await session.rollback()
+        try:
+            yield session
+        finally:
+            await session.rollback()
 
 
 @pytest_asyncio.fixture
