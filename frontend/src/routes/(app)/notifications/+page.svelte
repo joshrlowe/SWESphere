@@ -133,12 +133,16 @@
 		<div class="flex items-center justify-between px-4 py-3">
 			<h1 class="text-xl font-bold">Notifications</h1>
 			<div class="flex items-center gap-2">
-				{#if unreadCount > 0}
-					<Button variant="ghost" size="sm" on:click={markAllAsRead}>
-						<CheckCheck class="w-4 h-4" />
-						<span class="hidden sm:inline">Mark all read</span>
-					</Button>
-				{/if}
+				<Button
+					variant="ghost"
+					size="sm"
+					on:click={markAllAsRead}
+					disabled={unreadCount === 0}
+					aria-label="Mark all as read"
+				>
+					<CheckCheck class="w-4 h-4" />
+					<span class="hidden sm:inline">Mark all as read</span>
+				</Button>
 				<a
 					href="/settings/notifications"
 					class="p-2 rounded-full hover:bg-surface-hover transition-colors"

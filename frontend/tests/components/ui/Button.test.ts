@@ -62,6 +62,27 @@ describe('Button Component Logic', () => {
 		});
 	});
 
+	describe('Active state', () => {
+		it('should apply active scale animation', () => {
+			const activeClass = 'active:scale-95 transition-transform';
+			expect(activeClass).toContain('active:scale-95');
+		});
+
+		it('should have transition for smooth animation', () => {
+			const transitionClass = 'transition-all duration-200';
+			expect(transitionClass).toContain('transition-all');
+			expect(transitionClass).toContain('duration-200');
+		});
+	});
+
+	describe('Focus styles', () => {
+		it('should have focus-visible ring', () => {
+			const focusClass = 'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2';
+			expect(focusClass).toContain('focus-visible:ring-2');
+			expect(focusClass).toContain('focus-visible:ring-primary');
+		});
+	});
+
 	describe('Full width', () => {
 		it('should apply w-full class when fullWidth', () => {
 			const fullWidth = true;

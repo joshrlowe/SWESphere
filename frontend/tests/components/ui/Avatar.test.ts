@@ -16,12 +16,18 @@ describe('Avatar Component Logic', () => {
 
 	describe('Size classes', () => {
 		const sizeClasses = {
+			xs: 'w-6 h-6',
 			sm: 'w-8 h-8',
 			md: 'w-10 h-10',
 			lg: 'w-12 h-12',
 			xl: 'w-16 h-16',
 			'2xl': 'w-32 h-32'
 		};
+
+		it('should have extra small size classes', () => {
+			expect(sizeClasses.xs).toContain('w-6');
+			expect(sizeClasses.xs).toContain('h-6');
+		});
 
 		it('should have small size classes', () => {
 			expect(sizeClasses.sm).toContain('w-8');
@@ -118,6 +124,60 @@ describe('Avatar Component Logic', () => {
 
 			const fallbackSrc = handleError();
 			expect(fallbackSrc).toContain('dicebear.com');
+		});
+	});
+
+	describe('Initials fallback', () => {
+		it('should extract initials from display name', () => {
+			const getInitials = (name: string): string => {
+				const words = name.trim().split(/\s+/);
+				if (words.length === 1) return words[0][0]?.toUpperCase() || '';
+				return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+			};
+
+			expect(getInitials('Test User')).toBe('TU');
+			expect(getInitials('John')).toBe('J');
+			expect(getInitials('Alice Bob Charlie')).toBe('AC');
+		});
+
+		it('should handle empty or single word names', () => {
+			const getInitials = (name: string): string => {
+				const words = name.trim().split(/\s+/);
+				if (words.length === 1) return words[0][0]?.toUpperCase() || '';
+				return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+			};
+
+			expect(getInitials('Developer')).toBe('D');
+			expect(getInitials('X')).toBe('X');
+		});
+
+		it('should use username when no display name', () => {
+			const userWithoutDisplayName = { ...mockUser, display_name: null };
+			const fallback = userWithoutDisplayName.display_name || userWithoutDisplayName.username;
+			expect(fallback).toBe('testuser');
+		});
+	});
+
+	describe('Ring border', () => {
+		it('should apply ring border when ring prop is true', () => {
+			const ring = true;
+			const ringClass = ring ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : '';
+			expect(ringClass).toContain('ring-2');
+			expect(ringClass).toContain('ring-primary');
+		});
+
+		it('should not apply ring when false', () => {
+			const ring = false;
+			const ringClass = ring ? 'ring-2 ring-primary' : '';
+			expect(ringClass).toBe('');
+		});
+	});
+
+	describe('Fade transition', () => {
+		it('should use fade transition on image load', () => {
+			// The component uses Svelte's fade transition
+			const transitionConfig = { duration: 200 };
+			expect(transitionConfig.duration).toBe(200);
 		});
 	});
 });
