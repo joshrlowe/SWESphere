@@ -12,8 +12,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from redis.asyncio import Redis
 
 from app.config import settings
@@ -26,11 +26,8 @@ logger = logging.getLogger(__name__)
 # Password Hashing
 # =============================================================================
 
-_pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12,
-)
+# bcrypt work factor (2^12 = 4096 iterations)
+_BCRYPT_ROUNDS = 12
 
 
 def hash_password(password: str) -> str:
@@ -42,8 +39,16 @@ def hash_password(password: str) -> str:
 
     Returns:
         Bcrypt hash string
+    
+    Note:
+        bcrypt has a 72-byte limit. We truncate longer passwords.
+        This is standard practice as bcrypt ignores bytes beyond 72 anyway.
     """
-    return _pwd_context.hash(password)
+    # Encode to bytes and truncate to 72 bytes (bcrypt limit)
+    password_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt(rounds=_BCRYPT_ROUNDS)
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -56,9 +61,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
     Returns:
         True if password matches
+    
+    Note:
+        Password is truncated to 72 bytes to match hash_password behavior.
     """
     try:
-        return _pwd_context.verify(plain_password, hashed_password)
+        # Truncate to 72 bytes to match hashing behavior
+        password_bytes = plain_password.encode('utf-8')[:72]
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
     except Exception as e:
         logger.warning(f"Password verification error: {e}")
         return False

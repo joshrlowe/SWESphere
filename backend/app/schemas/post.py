@@ -58,6 +58,9 @@ class PostListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+    total_pages: int
+    has_next: bool
+    has_prev: bool
 
     @classmethod
     def create(
@@ -68,12 +71,16 @@ class PostListResponse(BaseModel):
         per_page: int,
     ) -> "PostListResponse":
         """Create a paginated response."""
+        total_pages = calculate_pages(total, per_page)
         return cls(
             items=posts,
             total=total,
             page=page,
             per_page=per_page,
-            pages=calculate_pages(total, per_page),
+            pages=total_pages,
+            total_pages=total_pages,
+            has_next=page < total_pages,
+            has_prev=page > 1,
         )
 
 

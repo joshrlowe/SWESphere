@@ -84,8 +84,8 @@ export const authHandlers = [
 			return HttpResponse.json({
 				user: createMockUser(),
 				tokens: {
-					access_token: 'test-access-token',
-					refresh_token: 'test-refresh-token',
+				access_token: 'test-access-token',
+				refresh_token: 'test-refresh-token',
 					token_type: 'bearer'
 				}
 			});

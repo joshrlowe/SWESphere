@@ -128,7 +128,7 @@ test.describe('Feed Interactions', () => {
 
 	test('should navigate to post detail', async ({ page }) => {
 		// Post detail page not implemented yet
-		test.skip();
+			test.skip();
 	});
 });
 

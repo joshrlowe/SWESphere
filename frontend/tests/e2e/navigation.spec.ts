@@ -245,7 +245,7 @@ test.describe('Back Navigation', () => {
 test.describe('Deep Linking', () => {
 	test('should load specific post', async ({ page }) => {
 		// Post detail page not implemented yet
-		test.skip();
+			test.skip();
 	});
 
 	test('should load specific profile', async ({ page }) => {
