@@ -2,36 +2,24 @@
 	/**
 	 * PostCard - Displays a single post with author info, content, and action buttons.
 	 *
-	 * Features:
-	 * - Optimistic like updates with animation
-	 * - Dropdown menu for post actions (delete for owner)
-	 * - Responsive layout with compact mode
-	 * - Keyboard accessible
+	 * A composition of focused sub-components:
+	 * - PostActionButton for reply, repost, share
+	 * - PostLikeButton for animated like interactions
+	 * - PostDropdownMenu for post-level actions
 	 */
 	import { createEventDispatcher } from 'svelte';
-	import { fly, scale, fade } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 	import { formatDistanceToNow } from 'date-fns';
-	import {
-		Heart,
-		MessageCircle,
-		Repeat2,
-		Share,
-		MoreHorizontal,
-		Trash2,
-		BadgeCheck
-	} from 'lucide-svelte';
+	import { MessageCircle, Repeat2, Share, BadgeCheck } from 'lucide-svelte';
 	import { clsx } from 'clsx';
+
 	import { Avatar } from '$lib/components/ui';
-	import { formatEngagementCount, type Post } from '$lib/types';
+	import { formatEngagementCount, getDisplayName, type Post } from '$lib/types';
 	import { currentUser } from '$lib/stores';
 
-	// ============================================================================
-	// Constants
-	// ============================================================================
-
-	const LIKE_ANIMATION_DURATION_MS = 400;
-	const HEART_BURST_PARTICLE_COUNT = 6;
-	const PARTICLE_ROTATION_DEGREES = 60;
+	import PostActionButton from './PostActionButton.svelte';
+	import PostLikeButton from './PostLikeButton.svelte';
+	import PostDropdownMenu from './PostDropdownMenu.svelte';
 
 	// ============================================================================
 	// Props
@@ -54,42 +42,18 @@
 	}>();
 
 	// ============================================================================
-	// State
-	// ============================================================================
-
-	let isMenuOpen = false;
-	let isLikeAnimating = false;
-
-	// Optimistic state for immediate UI feedback
-	let optimisticLiked = post.is_liked;
-	let optimisticLikesCount = post.likes_count;
-
-	// ============================================================================
 	// Derived State
 	// ============================================================================
-
-	// Sync optimistic state when post prop changes
-	$: {
-		optimisticLiked = post.is_liked;
-		optimisticLikesCount = post.likes_count;
-	}
 
 	$: author = post.author;
 	$: isOwner = $currentUser?.id === post.user_id;
 	$: profileUrl = author ? `/profile/${author.username}` : '#';
-	$: displayName = author?.display_name || author?.username || 'Unknown';
+	$: displayName = author ? getDisplayName(author) : 'Unknown';
 	$: formattedTime = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
 
-	// Pre-format engagement counts
+	// Pre-format engagement counts for display
 	$: formattedReplies = formatEngagementCount(post.comments_count);
 	$: formattedReposts = formatEngagementCount(post.reposts_count);
-	$: formattedLikes = formatEngagementCount(optimisticLikesCount);
-
-	// Generate heart burst particle rotations
-	$: particleRotations = Array.from(
-		{ length: HEART_BURST_PARTICLE_COUNT },
-		(_, i) => i * PARTICLE_ROTATION_DEGREES
-	);
 
 	// ============================================================================
 	// Event Handlers
@@ -106,25 +70,7 @@
 	}
 
 	function handleLike() {
-		const wasLiked = optimisticLiked;
-
-		// Optimistic update
-		optimisticLiked = !wasLiked;
-		optimisticLikesCount += wasLiked ? -1 : 1;
-
-		// Trigger animation only when liking (not unliking)
-		if (!wasLiked) {
-			triggerLikeAnimation();
-		}
-
-		dispatch('like', { postId: post.id, isLiked: !wasLiked });
-	}
-
-	function triggerLikeAnimation() {
-		isLikeAnimating = true;
-		setTimeout(() => {
-			isLikeAnimating = false;
-		}, LIKE_ANIMATION_DURATION_MS);
+		dispatch('like', { postId: post.id, isLiked: !post.is_liked });
 	}
 
 	function handleReply() {
@@ -137,20 +83,8 @@
 
 	function handleDelete() {
 		dispatch('delete', { postId: post.id });
-		closeMenu();
-	}
-
-	function toggleMenu() {
-		isMenuOpen = !isMenuOpen;
-	}
-
-	function closeMenu() {
-		isMenuOpen = false;
 	}
 </script>
-
-<!-- Close menu when clicking outside -->
-<svelte:window on:click={closeMenu} />
 
 <article
 	class={clsx(
@@ -164,9 +98,7 @@
 	tabindex="0"
 	in:fly={{ y: 20, duration: 300 }}
 >
-	<!-- ======================================================================== -->
-	<!-- Avatar Section                                                          -->
-	<!-- ======================================================================== -->
+	<!-- Avatar -->
 	<a
 		href={profileUrl}
 		class="flex-shrink-0 transition-transform duration-200 hover:scale-105"
@@ -175,13 +107,10 @@
 		<Avatar user={author} size={compact ? 'sm' : 'md'} />
 	</a>
 
-	<!-- ======================================================================== -->
-	<!-- Content Section                                                         -->
-	<!-- ======================================================================== -->
+	<!-- Content -->
 	<div class="flex-1 min-w-0">
 		<!-- Header: Author info + Menu -->
 		<header class="flex items-start justify-between gap-2">
-			<!-- Author Info -->
 			<div class="flex items-center gap-1 min-w-0 flex-wrap">
 				{#if author}
 					<a
@@ -211,40 +140,7 @@
 				</time>
 			</div>
 
-			<!-- Dropdown Menu -->
-			<div class="relative">
-				<button
-					type="button"
-					class="p-2 -m-2 rounded-full hover:bg-primary/10 hover:text-primary transition-colors duration-200"
-					on:click|stopPropagation={toggleMenu}
-					aria-label="More options"
-					aria-expanded={isMenuOpen}
-					aria-haspopup="menu"
-				>
-					<MoreHorizontal class="w-5 h-5 text-text-secondary" />
-				</button>
-
-				{#if isMenuOpen}
-					<div
-						class="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-xl z-10 min-w-[200px] overflow-hidden"
-						role="menu"
-						in:scale={{ duration: 150, start: 0.9, opacity: 0 }}
-						out:fade={{ duration: 100 }}
-					>
-						{#if isOwner}
-							<button
-								type="button"
-								class="w-full flex items-center gap-3 px-4 py-3 text-error hover:bg-error/10 transition-colors text-left"
-								on:click|stopPropagation={handleDelete}
-								role="menuitem"
-							>
-								<Trash2 class="w-5 h-5" />
-								Delete post
-							</button>
-						{/if}
-					</div>
-				{/if}
-			</div>
+			<PostDropdownMenu {isOwner} on:click={handleDelete} />
 		</header>
 
 		<!-- Post Body -->
@@ -264,161 +160,43 @@
 			</figure>
 		{/if}
 
-		<!-- ================================================================== -->
-		<!-- Action Buttons                                                     -->
-		<!-- ================================================================== -->
+		<!-- Action Buttons -->
 		{#if showActions}
 			<footer class="flex items-center justify-between mt-3 max-w-md -ml-2">
-				<!-- Reply Button -->
-				<button
-					type="button"
-					class="group flex items-center gap-1 p-2 rounded-full hover:bg-primary/10 transition-all duration-200 active:scale-90"
+				<PostActionButton
+					icon={MessageCircle}
+					label="Reply"
+					count={post.comments_count}
+					formattedCount={formattedReplies}
+					variant="primary"
 					on:click|stopPropagation={handleReply}
-					aria-label="Reply"
-				>
-					<MessageCircle
-						class="w-5 h-5 text-text-secondary group-hover:text-primary transition-colors"
-					/>
-					{#if post.comments_count > 0}
-						<span class="text-sm text-text-secondary group-hover:text-primary transition-colors">
-							{formattedReplies}
-						</span>
-					{/if}
-				</button>
+				/>
 
-				<!-- Repost Button -->
-				<button
-					type="button"
-					class={clsx(
-						'group flex items-center gap-1 p-2 rounded-full transition-all duration-200 active:scale-90',
-						post.is_repost ? 'text-success' : 'hover:bg-success/10'
-					)}
+				<PostActionButton
+					icon={Repeat2}
+					label="Repost"
+					count={post.reposts_count}
+					formattedCount={formattedReposts}
+					active={post.is_repost}
+					variant="success"
 					on:click|stopPropagation={handleRepost}
-					aria-label="Repost"
-					aria-pressed={post.is_repost}
-				>
-					<Repeat2
-						class={clsx(
-							'w-5 h-5 transition-colors',
-							post.is_repost ? 'text-success' : 'text-text-secondary group-hover:text-success'
-						)}
+				/>
+
+				<div on:click|stopPropagation on:keydown|stopPropagation>
+					<PostLikeButton
+						isLiked={post.is_liked}
+						likesCount={post.likes_count}
+						on:click={handleLike}
 					/>
-					{#if post.reposts_count > 0}
-						<span
-							class={clsx(
-								'text-sm transition-colors',
-								post.is_repost ? 'text-success' : 'text-text-secondary group-hover:text-success'
-							)}
-						>
-							{formattedReposts}
-						</span>
-					{/if}
-				</button>
+				</div>
 
-				<!-- Like Button -->
-				<button
-					type="button"
-					class={clsx(
-						'group flex items-center gap-1 p-2 rounded-full transition-all duration-200 active:scale-90',
-						optimisticLiked ? 'text-error' : 'hover:bg-error/10'
-					)}
-					on:click|stopPropagation={handleLike}
-					aria-label={optimisticLiked ? 'Unlike' : 'Like'}
-					aria-pressed={optimisticLiked}
-				>
-					<!-- Heart Icon with Animation -->
-					<div class="relative">
-						<Heart
-							class={clsx(
-								'w-5 h-5 transition-all duration-200',
-								optimisticLiked ? 'text-error fill-error' : 'text-text-secondary group-hover:text-error',
-								isLikeAnimating && 'animate-like-pop'
-							)}
-						/>
-
-						<!-- Heart Burst Particles -->
-						{#if isLikeAnimating}
-							<div
-								class="absolute inset-0 flex items-center justify-center pointer-events-none"
-								out:scale={{ duration: LIKE_ANIMATION_DURATION_MS, start: 1, opacity: 0 }}
-								aria-hidden="true"
-							>
-								{#each particleRotations as rotation}
-									<div
-										class="absolute w-1 h-1 rounded-full bg-error burst-particle"
-										style="--rotation: {rotation}deg"
-									/>
-								{/each}
-							</div>
-						{/if}
-					</div>
-
-					<!-- Like Count with Animation -->
-					{#key optimisticLikesCount}
-						<span
-							class={clsx(
-								'text-sm transition-colors',
-								optimisticLiked ? 'text-error' : 'text-text-secondary group-hover:text-error'
-							)}
-							in:fly={{ y: optimisticLiked ? -8 : 8, duration: 150 }}
-						>
-							{optimisticLikesCount > 0 ? formattedLikes : ''}
-						</span>
-					{/key}
-				</button>
-
-				<!-- Share Button -->
-				<button
-					type="button"
-					class="group p-2 rounded-full hover:bg-primary/10 transition-all duration-200 active:scale-90"
+				<PostActionButton
+					icon={Share}
+					label="Share"
+					variant="primary"
 					on:click|stopPropagation
-					aria-label="Share"
-				>
-					<Share class="w-5 h-5 text-text-secondary group-hover:text-primary transition-colors" />
-				</button>
+				/>
 			</footer>
 		{/if}
 	</div>
 </article>
-
-<style>
-	/* Heart burst particle animation */
-	.burst-particle {
-		animation: burst 0.4s ease-out forwards;
-		transform: rotate(var(--rotation, 0deg)) translateY(-8px);
-	}
-
-	@keyframes burst {
-		0% {
-			opacity: 1;
-			transform: rotate(var(--rotation, 0deg)) translateY(-8px) scale(1);
-		}
-		100% {
-			opacity: 0;
-			transform: rotate(var(--rotation, 0deg)) translateY(-20px) scale(0);
-		}
-	}
-
-	/* Heart pop animation on like */
-	:global(.animate-like-pop) {
-		animation: like-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-	}
-
-	@keyframes like-pop {
-		0% {
-			transform: scale(1);
-		}
-		25% {
-			transform: scale(1.3);
-		}
-		50% {
-			transform: scale(0.9);
-		}
-		75% {
-			transform: scale(1.1);
-		}
-		100% {
-			transform: scale(1);
-		}
-	}
-</style>

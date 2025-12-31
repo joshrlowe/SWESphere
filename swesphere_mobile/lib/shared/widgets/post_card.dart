@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../features/feed/domain/entities/post.dart';
+import 'avatar_widget.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
@@ -77,24 +79,11 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Avatar
-            GestureDetector(
+            AvatarWidget(
+              imageUrl: author.avatarUrl,
+              name: author.name,
+              size: 48,
               onTap: () => context.push(AppRoutes.profileRoute(author.username)),
-              child: CircleAvatar(
-                radius: 24,
-                backgroundColor: AppColors.surface,
-                backgroundImage: author.avatarUrl != null
-                    ? NetworkImage(author.avatarUrl!)
-                    : null,
-                child: author.avatarUrl == null
-                    ? Text(
-                        author.name[0].toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : null,
-              ),
             ),
             const SizedBox(width: 12),
 
@@ -190,10 +179,20 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                     const SizedBox(height: 12),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        post.mediaUrls!.first,
+                      child: CachedNetworkImage(
+                        imageUrl: post.mediaUrls!.first,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stack) => Container(
+                        placeholder: (context, url) => Container(
+                          height: 200,
+                          color: AppColors.surface,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
                           height: 200,
                           color: AppColors.surface,
                           child: const Center(

@@ -1,20 +1,22 @@
 import 'package:equatable/equatable.dart';
+
 import '../../../auth/domain/entities/user.dart';
 
 /// Notification types
 enum NotificationType {
   like,
   reply,
+  repost,
   follow,
   mention,
-  repost,
+  quote,
 }
 
 /// Notification entity
 class AppNotification extends Equatable {
   final int id;
   final NotificationType type;
-  final User actor;
+  final User fromUser;
   final int? postId;
   final String? postContent;
   final bool isRead;
@@ -23,7 +25,7 @@ class AppNotification extends Equatable {
   const AppNotification({
     required this.id,
     required this.type,
-    required this.actor,
+    required this.fromUser,
     this.postId,
     this.postContent,
     this.isRead = false,
@@ -34,7 +36,7 @@ class AppNotification extends Equatable {
   List<Object?> get props => [
         id,
         type,
-        actor,
+        fromUser,
         postId,
         postContent,
         isRead,
@@ -44,7 +46,7 @@ class AppNotification extends Equatable {
   AppNotification copyWith({
     int? id,
     NotificationType? type,
-    User? actor,
+    User? fromUser,
     int? postId,
     String? postContent,
     bool? isRead,
@@ -53,7 +55,7 @@ class AppNotification extends Equatable {
     return AppNotification(
       id: id ?? this.id,
       type: type ?? this.type,
-      actor: actor ?? this.actor,
+      fromUser: fromUser ?? this.fromUser,
       postId: postId ?? this.postId,
       postContent: postContent ?? this.postContent,
       isRead: isRead ?? this.isRead,
@@ -65,16 +67,17 @@ class AppNotification extends Equatable {
   String get message {
     switch (type) {
       case NotificationType.like:
-        return 'liked your post';
+        return '${fromUser.name} liked your post';
       case NotificationType.reply:
-        return 'replied to your post';
-      case NotificationType.follow:
-        return 'followed you';
-      case NotificationType.mention:
-        return 'mentioned you';
+        return '${fromUser.name} replied to your post';
       case NotificationType.repost:
-        return 'reposted your post';
+        return '${fromUser.name} reposted your post';
+      case NotificationType.follow:
+        return '${fromUser.name} followed you';
+      case NotificationType.mention:
+        return '${fromUser.name} mentioned you';
+      case NotificationType.quote:
+        return '${fromUser.name} quoted your post';
     }
   }
 }
-

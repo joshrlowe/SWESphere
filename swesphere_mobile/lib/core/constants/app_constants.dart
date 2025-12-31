@@ -1,65 +1,66 @@
-/// App-wide constants
+/// App constants
 abstract class AppConstants {
   /// App name
   static const String appName = 'SWESphere';
-
-  /// Max post length
-  static const int maxPostLength = 280;
-
-  /// Max bio length
-  static const int maxBioLength = 160;
-
-  /// Max display name length
-  static const int maxDisplayNameLength = 50;
-
+  
+  /// App version
+  static const String appVersion = '1.0.0';
+  
   /// Default page size for pagination
   static const int defaultPageSize = 20;
-
-  /// Cache duration in hours
-  static const int cacheDurationHours = 24;
-
-  /// Image compression quality
-  static const int imageQuality = 80;
-
-  /// Max image size in MB
-  static const int maxImageSizeMB = 5;
+  
+  /// Max post content length
+  static const int maxPostLength = 280;
+  
+  /// Max display name length
+  static const int maxDisplayNameLength = 50;
+  
+  /// Max bio length
+  static const int maxBioLength = 160;
+  
+  /// Max username length
+  static const int maxUsernameLength = 20;
+  
+  /// Min username length
+  static const int minUsernameLength = 3;
+  
+  /// Min password length
+  static const int minPasswordLength = 8;
+  
+  /// Avatar sizes
+  static const double avatarSmall = 32.0;
+  static const double avatarMedium = 48.0;
+  static const double avatarLarge = 80.0;
+  
+  /// Animation durations
+  static const Duration animationFast = Duration(milliseconds: 150);
+  static const Duration animationNormal = Duration(milliseconds: 300);
+  static const Duration animationSlow = Duration(milliseconds: 500);
+  
+  /// Debounce durations
+  static const Duration debounceShort = Duration(milliseconds: 300);
+  static const Duration debounceLong = Duration(milliseconds: 500);
+  
+  /// Cache durations
+  static const Duration cacheDurationShort = Duration(minutes: 5);
+  static const Duration cacheDurationMedium = Duration(minutes: 15);
+  static const Duration cacheDurationLong = Duration(hours: 1);
 }
 
-/// Storage box names for Hive
-abstract class HiveBoxes {
-  static const String users = 'users';
-  static const String posts = 'posts';
-  static const String settings = 'settings';
-  static const String drafts = 'drafts';
+/// Feature flags
+abstract class FeatureFlags {
+  /// Enable dark mode toggle
+  static const bool enableDarkModeToggle = false;
+  
+  /// Enable push notifications
+  static const bool enablePushNotifications = true;
+  
+  /// Enable analytics
+  static const bool enableAnalytics = false;
+  
+  /// Enable crash reporting
+  static const bool enableCrashReporting = true;
+  
+  /// Enable biometric auth
+  static const bool enableBiometricAuth = true;
 }
-
-/// API endpoints
-abstract class Endpoints {
-  // Auth
-  static const String login = '/auth/login';
-  static const String register = '/auth/register';
-  static const String logout = '/auth/logout';
-  static const String refresh = '/auth/refresh';
-
-  // Users
-  static const String users = '/users';
-  static const String me = '/users/me';
-  static String user(String username) => '/users/$username';
-  static String followers(String username) => '/users/$username/followers';
-  static String following(String username) => '/users/$username/following';
-  static String follow(String username) => '/users/$username/follow';
-
-  // Posts
-  static const String posts = '/posts';
-  static const String feed = '/posts/feed';
-  static const String explore = '/posts/explore';
-  static String post(int id) => '/posts/$id';
-  static String postLike(int id) => '/posts/$id/like';
-  static String postReplies(int id) => '/posts/$id/replies';
-
-  // Notifications
-  static const String notifications = '/notifications';
-  static const String unreadCount = '/notifications/unread-count';
-  static String markRead(int id) => '/notifications/$id/read';
-}
-

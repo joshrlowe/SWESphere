@@ -1,228 +1,201 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_view.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../../shared/widgets/post_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../providers/profile_provider.dart';
+import '../widgets/profile_header.dart';
 
-class ProfilePage extends ConsumerWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   final String username;
 
   const ProfilePage({super.key, required this.username});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends ConsumerState<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(_onTabChanged);
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      final tab = ProfileTab.values[_tabController.index];
+      ref.read(profileProvider(widget.username).notifier).changeTab(tab);
+    }
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(profileProvider(widget.username).notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(profileProvider(widget.username));
     final currentUser = ref.watch(currentUserProvider);
-    final isOwnProfile = currentUser?.username == username;
+    final isOwnProfile = currentUser?.username == widget.username;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // App Bar with Banner
-          SliverAppBar(
-            expandedHeight: 150,
-            pinned: true,
-            leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.arrow_back, color: Colors.white),
-              ),
-              onPressed: () => context.pop(),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: AppColors.primary.withOpacity(0.3),
-                // TODO: Add banner image when available
-              ),
-            ),
-          ),
-
-          // Profile Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Avatar and Actions Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Avatar (overlapping banner)
-                      Transform.translate(
-                        offset: const Offset(0, -40),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.background,
-                              width: 4,
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 40,
-                            backgroundColor: AppColors.surface,
-                            child: Text(
-                              username[0].toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Action buttons
-                      if (isOwnProfile)
-                        OutlinedButton(
-                          onPressed: () => context.push(AppRoutes.editProfile),
-                          child: const Text('Edit profile'),
-                        )
-                      else
-                        ElevatedButton(
-                          onPressed: () {
-                            // TODO: Follow/unfollow
-                          },
-                          child: const Text('Follow'),
-                        ),
-                    ],
-                  ),
-
-                  // Name and handle
-                  Transform.translate(
-                    offset: const Offset(0, -24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          username, // TODO: Display name
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '@$username',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Bio
-                        Text(
-                          'No bio yet',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Join date
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today_outlined,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Joined recently',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Stats
-                        Row(
-                          children: [
-                            _buildStat(context, '0', 'Following'),
-                            const SizedBox(width: 24),
-                            _buildStat(context, '0', 'Followers'),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Tabs
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _TabBarDelegate(
-              TabBar(
-                tabs: const [
-                  Tab(text: 'Posts'),
-                  Tab(text: 'Replies'),
-                  Tab(text: 'Media'),
-                  Tab(text: 'Likes'),
-                ],
-                labelColor: AppColors.textPrimary,
-                unselectedLabelColor: AppColors.textSecondary,
-                indicatorColor: AppColors.primary,
-              ),
-            ),
-          ),
-
-          // Posts list placeholder
-          SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.article_outlined,
-                    size: 48,
-                    color: AppColors.textMuted,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No posts yet',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      body: RefreshIndicator(
+        onRefresh: () =>
+            ref.read(profileProvider(widget.username).notifier).refresh(),
+        color: AppColors.primary,
+        backgroundColor: AppColors.surface,
+        child: _buildBody(state, isOwnProfile),
       ),
     );
   }
 
-  Widget _buildStat(BuildContext context, String count, String label) {
-    return Row(
-      children: [
-        Text(
-          count,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+  Widget _buildBody(ProfileState state, bool isOwnProfile) {
+    if (state.isLoading && state.user == null) {
+      return const CenteredLoading();
+    }
+
+    if (state.error != null && state.user == null) {
+      return ErrorView(
+        type: ErrorType.generic,
+        message: state.error,
+        onRetry: () =>
+            ref.read(profileProvider(widget.username).notifier).loadProfile(),
+      );
+    }
+
+    if (state.user == null) {
+      return const ErrorView(
+        type: ErrorType.notFound,
+        title: 'User not found',
+      );
+    }
+
+    return CustomScrollView(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        // App Bar
+        SliverAppBar(
+          pinned: true,
+          expandedHeight: 0,
+          leading: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
+            ),
+            onPressed: () => context.pop(),
+          ),
+          backgroundColor: AppColors.background,
+        ),
+
+        // Profile header
+        SliverToBoxAdapter(
+          child: ProfileHeader(
+            user: state.user!,
+            isOwnProfile: isOwnProfile,
+            onEditProfile: () => context.push(AppRoutes.editProfile),
+            onFollow: () => ref
+                .read(profileProvider(widget.username).notifier)
+                .toggleFollow(),
+            onFollowersPressed: () {
+              // TODO: Navigate to followers
+            },
+            onFollowingPressed: () {
+              // TODO: Navigate to following
+            },
           ),
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
+
+        // Tabs
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _TabBarDelegate(
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Posts'),
+                Tab(text: 'Replies'),
+                Tab(text: 'Media'),
+                Tab(text: 'Likes'),
+              ],
+              labelColor: AppColors.textPrimary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              indicatorSize: TabBarIndicatorSize.label,
+            ),
           ),
         ),
+
+        // Posts content
+        if (state.isLoadingPosts)
+          const SliverFillRemaining(
+            child: CenteredLoading(),
+          )
+        else if (state.posts.isEmpty)
+          SliverFillRemaining(
+            child: ProfilePostsEmptyState(
+              isOwnProfile: isOwnProfile,
+              onCreatePost: () => context.push(AppRoutes.compose),
+            ),
+          )
+        else
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index == state.posts.length) {
+                  return state.isLoadingMore
+                      ? const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CenteredLoading(),
+                        )
+                      : const SizedBox.shrink();
+                }
+
+                final post = state.posts[index];
+                return Column(
+                  children: [
+                    PostCard(
+                      post: post,
+                      onLike: () {
+                        // TODO: Implement like
+                      },
+                    ),
+                    const Divider(height: 1),
+                  ],
+                );
+              },
+              childCount: state.posts.length + (state.hasMorePosts ? 1 : 0),
+            ),
+          ),
       ],
     );
   }
@@ -248,6 +221,6 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => tabBar.preferredSize.height;
 
   @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
+      false;
 }
-

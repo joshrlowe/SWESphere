@@ -3,139 +3,161 @@ import 'package:swesphere_mobile/features/auth/domain/entities/user.dart';
 import 'package:swesphere_mobile/features/notifications/domain/entities/notification.dart';
 
 void main() {
-  group('AppNotification entity', () {
-    final testActor = User(
-      id: 1,
-      username: 'actor',
-      email: 'actor@example.com',
-      displayName: 'Actor Name',
-      createdAt: DateTime(2024, 1, 1),
-    );
+  final testUser = User(
+    id: 1,
+    username: 'testuser',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    createdAt: DateTime(2024, 1, 1),
+  );
 
-    test('creates like notification with correct message', () {
+  group('NotificationType', () {
+    test('has all expected values', () {
+      expect(NotificationType.values, contains(NotificationType.like));
+      expect(NotificationType.values, contains(NotificationType.reply));
+      expect(NotificationType.values, contains(NotificationType.repost));
+      expect(NotificationType.values, contains(NotificationType.follow));
+      expect(NotificationType.values, contains(NotificationType.mention));
+      expect(NotificationType.values, contains(NotificationType.quote));
+    });
+  });
+
+  group('AppNotification', () {
+    test('creates with required fields', () {
       final notification = AppNotification(
         id: 1,
         type: NotificationType.like,
-        actor: testActor,
-        postId: 123,
-        postContent: 'This is the liked post content',
+        fromUser: testUser,
         createdAt: DateTime(2024, 1, 15),
       );
 
+      expect(notification.id, 1);
       expect(notification.type, NotificationType.like);
-      expect(notification.message, 'liked your post');
-      expect(notification.postId, 123);
-      expect(notification.postContent, 'This is the liked post content');
-    });
-
-    test('creates reply notification with correct message', () {
-      final notification = AppNotification(
-        id: 2,
-        type: NotificationType.reply,
-        actor: testActor,
-        postId: 456,
-        createdAt: DateTime(2024, 1, 15),
-      );
-
-      expect(notification.type, NotificationType.reply);
-      expect(notification.message, 'replied to your post');
-    });
-
-    test('creates follow notification with correct message', () {
-      final notification = AppNotification(
-        id: 3,
-        type: NotificationType.follow,
-        actor: testActor,
-        createdAt: DateTime(2024, 1, 15),
-      );
-
-      expect(notification.type, NotificationType.follow);
-      expect(notification.message, 'followed you');
+      expect(notification.fromUser, testUser);
       expect(notification.postId, isNull);
-    });
-
-    test('creates mention notification with correct message', () {
-      final notification = AppNotification(
-        id: 4,
-        type: NotificationType.mention,
-        actor: testActor,
-        postId: 789,
-        createdAt: DateTime(2024, 1, 15),
-      );
-
-      expect(notification.type, NotificationType.mention);
-      expect(notification.message, 'mentioned you');
-    });
-
-    test('creates repost notification with correct message', () {
-      final notification = AppNotification(
-        id: 5,
-        type: NotificationType.repost,
-        actor: testActor,
-        postId: 101,
-        createdAt: DateTime(2024, 1, 15),
-      );
-
-      expect(notification.type, NotificationType.repost);
-      expect(notification.message, 'reposted your post');
-    });
-
-    test('isRead defaults to false', () {
-      final notification = AppNotification(
-        id: 1,
-        type: NotificationType.like,
-        actor: testActor,
-        createdAt: DateTime(2024, 1, 15),
-      );
-
+      expect(notification.postContent, isNull);
       expect(notification.isRead, false);
     });
 
-    test('can create read notification', () {
+    test('creates with all fields', () {
       final notification = AppNotification(
         id: 1,
-        type: NotificationType.like,
-        actor: testActor,
+        type: NotificationType.reply,
+        fromUser: testUser,
+        postId: 123,
+        postContent: 'This is the post content',
         isRead: true,
         createdAt: DateTime(2024, 1, 15),
       );
 
+      expect(notification.postId, 123);
+      expect(notification.postContent, 'This is the post content');
       expect(notification.isRead, true);
     });
 
-    test('copyWith creates new notification with updated fields', () {
+    group('message', () {
+      test('returns correct message for like', () {
+        final notification = AppNotification(
+          id: 1,
+          type: NotificationType.like,
+          fromUser: testUser,
+          createdAt: DateTime(2024, 1, 15),
+        );
+
+        expect(notification.message, 'Test User liked your post');
+      });
+
+      test('returns correct message for reply', () {
+        final notification = AppNotification(
+          id: 1,
+          type: NotificationType.reply,
+          fromUser: testUser,
+          createdAt: DateTime(2024, 1, 15),
+        );
+
+        expect(notification.message, 'Test User replied to your post');
+      });
+
+      test('returns correct message for repost', () {
+        final notification = AppNotification(
+          id: 1,
+          type: NotificationType.repost,
+          fromUser: testUser,
+          createdAt: DateTime(2024, 1, 15),
+        );
+
+        expect(notification.message, 'Test User reposted your post');
+      });
+
+      test('returns correct message for follow', () {
+        final notification = AppNotification(
+          id: 1,
+          type: NotificationType.follow,
+          fromUser: testUser,
+          createdAt: DateTime(2024, 1, 15),
+        );
+
+        expect(notification.message, 'Test User followed you');
+      });
+
+      test('returns correct message for mention', () {
+        final notification = AppNotification(
+          id: 1,
+          type: NotificationType.mention,
+          fromUser: testUser,
+          createdAt: DateTime(2024, 1, 15),
+        );
+
+        expect(notification.message, 'Test User mentioned you');
+      });
+
+      test('returns correct message for quote', () {
+        final notification = AppNotification(
+          id: 1,
+          type: NotificationType.quote,
+          fromUser: testUser,
+          createdAt: DateTime(2024, 1, 15),
+        );
+
+        expect(notification.message, 'Test User quoted your post');
+      });
+    });
+
+    test('copyWith updates specified fields', () {
       final notification = AppNotification(
         id: 1,
         type: NotificationType.like,
-        actor: testActor,
+        fromUser: testUser,
         isRead: false,
         createdAt: DateTime(2024, 1, 15),
       );
 
-      final updatedNotification = notification.copyWith(isRead: true);
+      final updated = notification.copyWith(isRead: true);
 
-      expect(updatedNotification.isRead, true);
-      expect(updatedNotification.id, notification.id);
-      expect(updatedNotification.type, notification.type);
+      expect(updated.isRead, true);
+      expect(updated.id, 1);
+      expect(updated.type, NotificationType.like);
     });
 
     test('equality works correctly', () {
       final notification1 = AppNotification(
         id: 1,
         type: NotificationType.like,
-        actor: testActor,
+        fromUser: testUser,
         createdAt: DateTime(2024, 1, 15),
       );
+
       final notification2 = AppNotification(
         id: 1,
         type: NotificationType.like,
-        actor: testActor,
+        fromUser: testUser,
         createdAt: DateTime(2024, 1, 15),
       );
+
       final notification3 = AppNotification(
         id: 2,
         type: NotificationType.follow,
-        actor: testActor,
+        fromUser: testUser,
         createdAt: DateTime(2024, 1, 15),
       );
 
@@ -143,16 +165,4 @@ void main() {
       expect(notification1, isNot(equals(notification3)));
     });
   });
-
-  group('NotificationType', () {
-    test('has all expected types', () {
-      expect(NotificationType.values, contains(NotificationType.like));
-      expect(NotificationType.values, contains(NotificationType.reply));
-      expect(NotificationType.values, contains(NotificationType.follow));
-      expect(NotificationType.values, contains(NotificationType.mention));
-      expect(NotificationType.values, contains(NotificationType.repost));
-      expect(NotificationType.values.length, 5);
-    });
-  });
 }
-
