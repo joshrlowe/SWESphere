@@ -99,6 +99,7 @@ post_likes = Table(
 # ===================
 
 # Import models after association tables to avoid circular imports
+from app.models.blocked_word import BlockedWord
 from app.models.comment import Comment
 from app.models.mixins import (
     BaseModelMixin,
@@ -124,6 +125,7 @@ __all__ = [
     "Post",
     "Comment",
     "Notification",
+    "BlockedWord",
     # Enums
     "NotificationType",
     # Mixins

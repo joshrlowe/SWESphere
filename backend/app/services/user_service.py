@@ -227,7 +227,7 @@ class UserService:
                 username,
                 cached_id,
             )
-        return None
+            return None
 
         user = await self._repo.get_by_id(user_id)
         if user:

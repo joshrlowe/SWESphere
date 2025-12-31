@@ -40,6 +40,14 @@ from app.schemas.user import (
     UserResponse,
     UserUpdate,
 )
+from app.schemas.moderation import (
+    BlockedWordCreate,
+    BlockedWordResponse,
+    BlockedWordUpdate,
+    ModerationAction,
+    ModerationResult,
+    SpamCheckResult,
+)
 
 __all__ = [
     # Auth
@@ -77,4 +85,11 @@ __all__ = [
     "MessageResponse",
     "ErrorResponse",
     "PaginatedResponse",
+    # Moderation
+    "ModerationResult",
+    "ModerationAction",
+    "SpamCheckResult",
+    "BlockedWordCreate",
+    "BlockedWordResponse",
+    "BlockedWordUpdate",
 ]

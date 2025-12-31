@@ -44,6 +44,10 @@ from app.services.recommendation_service import (
     ScoredPost,
     get_recommendation_service,
 )
+from app.services.moderation_service import (
+    ModerationService,
+    get_moderation_service,
+)
 from app.services.storage import FileStorage, LocalFileStorage
 from app.services.user_service import UserService
 
@@ -59,6 +63,9 @@ __all__ = [
     "RecommendationService",
     "ScoredPost",
     "get_recommendation_service",
+    # Moderation Service
+    "ModerationService",
+    "get_moderation_service",
     # Avatar Service
     "AvatarService",
     "AvatarConfig",

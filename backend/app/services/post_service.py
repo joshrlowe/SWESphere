@@ -11,7 +11,6 @@ Implements caching strategies:
 """
 
 import html
-import json
 import logging
 import re
 from datetime import datetime
@@ -902,37 +901,6 @@ class PostService:
             has_next=data.get("has_next", False),
             has_prev=data.get("has_prev", False),
         )
-
-    async def _get_cached_feed(self, key: str) -> PaginatedResult | None:
-        """Get cached feed from Redis (legacy method)."""
-        if not self.redis:
-            return None
-
-        try:
-            data = await self.redis.get(key)
-            if data:
-                parsed = json.loads(data)
-                return self._deserialize_feed_result(parsed)
-        except Exception as e:
-            logger.warning(f"Cache read error: {e}")
-
-        return None
-
-    async def _cache_feed(
-        self,
-        key: str,
-        result: PaginatedResult,
-        ttl: int,
-    ) -> None:
-        """Cache feed result in Redis (legacy method)."""
-        if not self.redis:
-            return
-
-        try:
-            serialized = json.dumps(self._serialize_feed_result(result), default=str)
-            await self.redis.setex(key, ttl, serialized)
-        except Exception as e:
-            logger.warning(f"Cache write error: {e}")
 
     async def _invalidate_feed_caches(self, user_id: int) -> None:
         """Invalidate feed caches after post creation/deletion."""
