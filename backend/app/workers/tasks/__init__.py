@@ -6,6 +6,7 @@ This package contains all background tasks organized by domain:
 - notification_tasks: Push notifications, real-time publishing, digests
 - feed_tasks: Trending feed generation, cache invalidation, fanout
 - cleanup_tasks: Token cleanup, soft-delete pruning, media cleanup
+- recommendation_tasks: Ranked feed precomputation, affinity decay
 """
 
 from app.workers.tasks.cleanup_tasks import (
@@ -37,6 +38,12 @@ from app.workers.tasks.notification_tasks import (
     send_daily_digest,
     send_push_notification,
 )
+from app.workers.tasks.recommendation_tasks import (
+    compute_user_feed,
+    decay_affinity_scores,
+    invalidate_ranked_feed,
+    precompute_feeds,
+)
 
 __all__ = [
     # Email tasks
@@ -57,6 +64,11 @@ __all__ = [
     "invalidate_user_feed_cache",
     "fanout_post_to_followers",
     "precompute_user_feed",
+    # Recommendation tasks
+    "precompute_feeds",
+    "decay_affinity_scores",
+    "compute_user_feed",
+    "invalidate_ranked_feed",
     # Cleanup tasks
     "cleanup_expired_tokens",
     "cleanup_old_notifications",

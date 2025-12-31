@@ -33,6 +33,7 @@ celery_app.autodiscover_tasks([
     "app.workers.tasks.notification_tasks",
     "app.workers.tasks.feed_tasks",
     "app.workers.tasks.cleanup_tasks",
+    "app.workers.tasks.recommendation_tasks",
 ])
 
 # =============================================================================
@@ -169,6 +170,9 @@ celery_app.conf.update(
         # Feed generation tasks
         "app.workers.tasks.feed_tasks.*": {"queue": "feed"},
         
+        # Recommendation tasks go to feed queue
+        "app.workers.tasks.recommendation_tasks.*": {"queue": "feed"},
+        
         # Cleanup tasks go to low priority
         "app.workers.tasks.cleanup_tasks.*": {"queue": "low_priority"},
     },
@@ -186,6 +190,20 @@ celery_app.conf.beat_schedule = {
         "task": "app.workers.tasks.feed_tasks.generate_trending_feed",
         "schedule": 300.0,  # Every 5 minutes
         "options": {"queue": "feed"},
+    },
+    
+    # ---------------------------------
+    # Recommendation System
+    # ---------------------------------
+    "precompute-ranked-feeds": {
+        "task": "app.workers.tasks.recommendation_tasks.precompute_feeds",
+        "schedule": 180.0,  # Every 3 minutes
+        "options": {"queue": "feed"},
+    },
+    "decay-affinity-scores": {
+        "task": "app.workers.tasks.recommendation_tasks.decay_affinity_scores",
+        "schedule": crontab(hour=2, minute=0),  # Daily at 2 AM UTC
+        "options": {"queue": "low_priority"},
     },
     
     # ---------------------------------

@@ -30,6 +30,10 @@ class RedisKeys:
     CACHE_PREFIX = "cache"
     HOME_FEED_PREFIX = "home_feed"
     EXPLORE_FEED_PREFIX = "explore_feed"
+    
+    # Recommendation system prefixes
+    AFFINITY_PREFIX = "affinity"
+    RANKED_FEED_PREFIX = "ranked_feed"
 
     # Entity prefixes
     USER_PREFIX = "user"
@@ -94,6 +98,26 @@ class RedisKeys:
     def explore_feed_pattern(self) -> str:
         """Pattern for scanning all explore feed cache."""
         return f"{self.EXPLORE_FEED_PREFIX}:*"
+
+    # =========================================================================
+    # Recommendation System Keys
+    # =========================================================================
+
+    def affinity(self, user_id: int, author_id: int) -> str:
+        """Generate key for user-to-author affinity score."""
+        return f"{self.AFFINITY_PREFIX}:{user_id}:{author_id}"
+
+    def affinity_pattern(self, user_id: int) -> str:
+        """Pattern for scanning all affinity scores for a user."""
+        return f"{self.AFFINITY_PREFIX}:{user_id}:*"
+
+    def ranked_feed(self, user_id: int) -> str:
+        """Generate key for pre-computed ranked feed (sorted set)."""
+        return f"{self.RANKED_FEED_PREFIX}:{user_id}"
+
+    def ranked_feed_pattern(self) -> str:
+        """Pattern for scanning all ranked feeds."""
+        return f"{self.RANKED_FEED_PREFIX}:*"
 
     # =========================================================================
     # Rate Limiting Keys
@@ -269,6 +293,20 @@ class CacheKeys:
     def token_blacklist(jti: str) -> str:
         """Generate key for blacklisted token by JTI."""
         return f"token_blacklist:jti:{jti}"
+
+    # =========================================================================
+    # Recommendation System Keys
+    # =========================================================================
+
+    @staticmethod
+    def affinity(user_id: int, author_id: int) -> str:
+        """Generate key for user-to-author affinity score."""
+        return f"affinity:{user_id}:{author_id}"
+
+    @staticmethod
+    def ranked_feed(user_id: int) -> str:
+        """Generate key for pre-computed ranked feed."""
+        return f"ranked_feed:{user_id}"
 
     # =========================================================================
     # Pattern Builders (for invalidation)

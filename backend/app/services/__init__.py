@@ -39,6 +39,11 @@ from app.services.notification_service import (
 )
 from app.services.post_service import PostService
 from app.services.realtime_service import RealtimeService, realtime_service
+from app.services.recommendation_service import (
+    RecommendationService,
+    ScoredPost,
+    get_recommendation_service,
+)
 from app.services.storage import FileStorage, LocalFileStorage
 from app.services.user_service import UserService
 
@@ -50,6 +55,10 @@ __all__ = [
     "NotificationService",
     "RealtimeService",
     "realtime_service",
+    # Recommendation Service
+    "RecommendationService",
+    "ScoredPost",
+    "get_recommendation_service",
     # Avatar Service
     "AvatarService",
     "AvatarConfig",
